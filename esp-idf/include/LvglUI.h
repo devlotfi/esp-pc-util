@@ -45,6 +45,8 @@ static void lvgl_flush_cb(
 
 static void ui()
 {
+    LV_IMG_DECLARE(my_image);
+
     lv_obj_t *screen =
         lv_screen_active();
 
@@ -53,37 +55,9 @@ static void ui()
         lv_color_hex(0xFFFFFF),
         0);
 
-    lv_obj_t *label =
-        lv_label_create(screen);
-
-    lv_label_set_text(
-        label,
-        "Hello ESP-IDF + LVGL!");
-
-    lv_obj_center(label);
-
-    lv_obj_t *button =
-        lv_button_create(screen);
-
-    lv_obj_set_size(
-        button,
-        160,
-        60);
-
-    lv_obj_align(
-        button,
-        LV_ALIGN_CENTER,
-        0,
-        60);
-
-    lv_obj_t *button_label =
-        lv_label_create(button);
-
-    lv_label_set_text(
-        button_label,
-        "Hello!");
-
-    lv_obj_center(button_label);
+    lv_obj_t *img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, &my_image);
+    lv_obj_center(img);
 }
 
 static void lvgl_task(void *arg)

@@ -4,7 +4,7 @@
 #include "TinyUsbHid.h"
 #include "TftLcd.h"
 #include "LvglUI.h"
-// #include "my_image.h"
+#include "my_image.h"
 
 static const char *TAG_MAIN = "GPIO";
 
@@ -21,7 +21,7 @@ extern "C" void app_main(void)
         "tiny_usb",
         4096,
         nullptr,
-        5,
+        7,
         nullptr);
     if (task_result != pdPASS)
     {

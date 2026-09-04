@@ -253,6 +253,6 @@ static void tiny_usb_task(void *arg)
       pinInput.previous_pressed = pressed;
     }
     process_encoder();
-    vTaskDelay(pdMS_TO_TICKS(2));
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }

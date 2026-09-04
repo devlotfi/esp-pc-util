@@ -2,6 +2,7 @@
    Size: 320x240, format: RGB565
    Bytes: 153600 */
 
+#pragma once
 #include "lvgl.h"
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
@@ -153612,17 +153613,17 @@ static const uint8_t my_image_map[] = {
 };
 
 const lv_image_dsc_t my_image = {
-    {
-        // header
-        LV_IMAGE_HEADER_MAGIC,  // magic
-        LV_COLOR_FORMAT_RGB565, // cf
-        0,                      // flags
-        320,                    // w
-        240,                    // h
-        320 * 2,                // stride (bytes per row = w * bytes-per-pixel)
-        0                       // reserved_2
+    .header = {
+        .magic = LV_IMAGE_HEADER_MAGIC,
+        .cf = LV_COLOR_FORMAT_RGB565,
+        .flags = 0,
+        .w = 320,
+        .h = 240,
+        .stride = 320 * 2,
+        .reserved_2 = 0,
     },
-    153600,       // data_size
-    my_image_map, // data
-    nullptr       // reserved (present in lv_image_dsc_t)
+    .data_size = 153600,
+    .data = my_image_map,
+    .reserved = nullptr,
+    .reserved_2 = 0,
 };
