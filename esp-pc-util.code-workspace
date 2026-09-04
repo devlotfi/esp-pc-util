@@ -1,0 +1,13 @@
+{
+  "folders": [
+	{
+		"name": "esp-idf",
+		"path": "esp-idf"
+	},
+	{
+		"name": "esp-pc-util",
+		"path": "."
+	}
+],
+  "settings": {}
+}
