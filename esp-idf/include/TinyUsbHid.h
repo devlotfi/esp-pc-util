@@ -202,38 +202,22 @@ static void process_encoder(void)
 
   switch (transition)
   {
-    // ---------------------------------------------------------------------
-    // Clockwise transitions
-    // ---------------------------------------------------------------------
-
   case 0b0001:
   case 0b0111:
   case 0b1110:
   case 0b1000:
-
     encoder_accumulator++;
-
     break;
-
-    // ---------------------------------------------------------------------
-    // Counter-clockwise transitions
-    // ---------------------------------------------------------------------
-
   case 0b0010:
   case 0b1011:
   case 0b1101:
   case 0b0100:
-
     encoder_accumulator--;
-
     break;
-
   default:
-    // Invalid/bounced transition.
     break;
   }
 
-  // One complete quadrature cycle.
   if (encoder_accumulator >= 4)
   {
     encoder_accumulator = 0;
