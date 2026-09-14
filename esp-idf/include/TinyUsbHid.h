@@ -42,7 +42,8 @@ static const uint8_t hid_configuration_descriptor[] = {
 
 static const uint8_t language_descriptor[] = {
     0x09,
-    0x04};
+    0x04,
+};
 
 static const char *hid_string_descriptor[] = {
     reinterpret_cast<const char *>(language_descriptor), // 0: English
@@ -101,7 +102,7 @@ void setup_tinyusb(void)
       tinyusb_driver_install(&tusb_cfg));
 }
 
-void send_key(uint16_t &report)
+void send_key(uint16_t report)
 {
   if (!tud_mounted())
   {
@@ -140,47 +141,21 @@ void send_key(uint16_t &report)
   ESP_LOGI(TAG_TINY_USB, "Action released");
 }
 
-struct PinInput
-{
-  gpio_num_t pin;
-  uint16_t key;
-  bool previous_pressed;
-};
-
-static PinInput pinInputs[] = {
-    {
-        .pin = PREVIOUS_BTN_PIN,
-        .key = HID_USAGE_CONSUMER_SCAN_PREVIOUS_TRACK,
-        .previous_pressed = false,
-    },
-    {
-        .pin = PAUSE_BTN_PIN,
-        .key = HID_USAGE_CONSUMER_PLAY_PAUSE,
-        .previous_pressed = false,
-    },
-    {
-        .pin = NEXT_BTN_PIN,
-        .key = HID_USAGE_CONSUMER_SCAN_NEXT_TRACK,
-        .previous_pressed = false,
-    },
-    {
-        .pin = ENCODER_SW_PIN,
-        .key = HID_USAGE_CONSUMER_MUTE,
-        .previous_pressed = false,
-    },
-};
+// --------------------------------------------------
+// Rotary encoder
+// --------------------------------------------------
 
 struct RotaryEncoder
 {
   uint8_t previous_state;
-  bool previous_switch_pressed;
-};
-static RotaryEncoder encoder = {
-    .previous_state = 0,
-    .previous_switch_pressed = false,
 };
 
-static uint8_t read_encoder_state(void)
+static RotaryEncoder encoder = {
+    .previous_state = 0,
+};
+
+// Read CLK + DT as a 2-bit state
+static inline uint8_t read_encoder_state(void)
 {
   const uint8_t clk =
       gpio_get_level(ENCODER_CLK_PIN);
@@ -189,15 +164,88 @@ static uint8_t read_encoder_state(void)
   return (clk << 1) | dt;
 }
 
-static int8_t encoder_accumulator = 0;
-
-static void process_encoder(void)
+enum class ButtonEvents : uint8_t
 {
+  EVENT_PREVIOUS_TRACK,
+  EVENT_PAUSE,
+  EVENT_NEXT_TRACK,
+  EVENT_MUTE,
+  EVENT_NONE,
+};
+
+enum class EncoderEvents : uint8_t
+{
+  EVENT_VOLUME_UP,
+  EVENT_VOLUME_DOWN,
+  EVENT_NONE,
+};
+
+static volatile int8_t encoder_accumulator = 0;
+static volatile EncoderEvents encoder_event = EncoderEvents::EVENT_NONE;
+static volatile ButtonEvents button_event = ButtonEvents::EVENT_NONE;
+
+static TaskHandle_t tiny_usb_task_handle = nullptr;
+
+static void IRAM_ATTR button_isr_handler(void *arg)
+{
+  (void)arg;
+
+  bool previous_pressed = gpio_get_level(PREVIOUS_BTN_PIN) == 0;
+  bool pause_pressed = gpio_get_level(PAUSE_BTN_PIN) == 0;
+  bool next_pressed = gpio_get_level(NEXT_BTN_PIN) == 0;
+  bool mute_pressed = gpio_get_level(ENCODER_SW_PIN) == 0;
+
+  if (previous_pressed + pause_pressed + next_pressed + mute_pressed == 1)
+  {
+    if (previous_pressed)
+    {
+      button_event = ButtonEvents::EVENT_PREVIOUS_TRACK;
+    }
+    else if (pause_pressed)
+    {
+      button_event = ButtonEvents::EVENT_PAUSE;
+    }
+    else if (next_pressed)
+    {
+      button_event = ButtonEvents::EVENT_NEXT_TRACK;
+    }
+    else if (mute_pressed)
+    {
+      button_event = ButtonEvents::EVENT_MUTE;
+    }
+  }
+  else
+  {
+    button_event = ButtonEvents::EVENT_NONE;
+  }
+
+  BaseType_t higher_priority_task_woken = pdFALSE;
+
+  if (tiny_usb_task_handle != nullptr)
+  {
+    vTaskNotifyGiveFromISR(
+        tiny_usb_task_handle,
+        &higher_priority_task_woken);
+  }
+
+  if (higher_priority_task_woken)
+  {
+    portYIELD_FROM_ISR();
+  }
+}
+
+static void IRAM_ATTR encoder_isr_handler(void *arg)
+{
+  (void)arg;
+
   const uint8_t current_state =
-      read_encoder_state();
+      ((uint8_t)gpio_get_level(ENCODER_CLK_PIN) << 1) |
+      (uint8_t)gpio_get_level(ENCODER_DT_PIN);
+
   const uint8_t transition =
       (encoder.previous_state << 2) |
       current_state;
+
   encoder.previous_state = current_state;
 
   switch (transition)
@@ -206,14 +254,16 @@ static void process_encoder(void)
   case 0b0111:
   case 0b1110:
   case 0b1000:
-    encoder_accumulator++;
+    encoder_accumulator = encoder_accumulator + 1;
     break;
+
   case 0b0010:
   case 0b1011:
   case 0b1101:
   case 0b0100:
-    encoder_accumulator--;
+    encoder_accumulator = encoder_accumulator - 1;
     break;
+
   default:
     break;
   }
@@ -221,38 +271,112 @@ static void process_encoder(void)
   if (encoder_accumulator >= 4)
   {
     encoder_accumulator = 0;
-
-    uint16_t report = HID_USAGE_CONSUMER_VOLUME_INCREMENT;
-    send_key(report);
+    encoder_event = EncoderEvents::EVENT_VOLUME_UP;
   }
   else if (encoder_accumulator <= -4)
   {
     encoder_accumulator = 0;
+    encoder_event = EncoderEvents::EVENT_VOLUME_DOWN;
+  }
+  else
+  {
+    return;
+  }
 
-    uint16_t report = HID_USAGE_CONSUMER_VOLUME_DECREMENT;
-    send_key(report);
+  BaseType_t higher_priority_task_woken = pdFALSE;
+
+  if (tiny_usb_task_handle != nullptr)
+  {
+    vTaskNotifyGiveFromISR(
+        tiny_usb_task_handle,
+        &higher_priority_task_woken);
+  }
+
+  if (higher_priority_task_woken)
+  {
+    portYIELD_FROM_ISR();
   }
 }
 
 static void tiny_usb_task(void *arg)
 {
   (void)arg;
+
+  // Establish initial encoder state before enabling interrupts
   encoder.previous_state = read_encoder_state();
+
+  tiny_usb_task_handle = xTaskGetCurrentTaskHandle();
+
+  // Install GPIO ISR service
+  ESP_ERROR_CHECK(
+      gpio_install_isr_service(ESP_INTR_FLAG_IRAM));
+
+  ESP_ERROR_CHECK(
+      gpio_isr_handler_add(
+          PREVIOUS_BTN_PIN,
+          button_isr_handler,
+          nullptr));
+  ESP_ERROR_CHECK(
+      gpio_isr_handler_add(
+          PAUSE_BTN_PIN,
+          button_isr_handler,
+          nullptr));
+  ESP_ERROR_CHECK(
+      gpio_isr_handler_add(
+          NEXT_BTN_PIN,
+          button_isr_handler,
+          nullptr));
+  ESP_ERROR_CHECK(
+      gpio_isr_handler_add(
+          ENCODER_SW_PIN,
+          button_isr_handler,
+          nullptr));
+
+  ESP_ERROR_CHECK(
+      gpio_isr_handler_add(
+          ENCODER_CLK_PIN,
+          encoder_isr_handler,
+          nullptr));
+  ESP_ERROR_CHECK(
+      gpio_isr_handler_add(
+          ENCODER_DT_PIN,
+          encoder_isr_handler,
+          nullptr));
+
   while (true)
   {
-    for (auto &pinInput : pinInputs)
+    if (ulTaskNotifyTake(pdTRUE, 0) > 0)
     {
-      const bool pressed =
-          gpio_get_level(pinInput.pin) == 0;
-
-      if (pressed && !pinInput.previous_pressed)
+      if (encoder_event == EncoderEvents::EVENT_VOLUME_UP)
       {
-        send_key(pinInput.key);
-        vTaskDelay(pdMS_TO_TICKS(50));
+        send_key(HID_USAGE_CONSUMER_VOLUME_INCREMENT);
       }
-      pinInput.previous_pressed = pressed;
+      else if (encoder_event == EncoderEvents::EVENT_VOLUME_DOWN)
+      {
+        send_key(HID_USAGE_CONSUMER_VOLUME_DECREMENT);
+      }
+
+      if (button_event == ButtonEvents::EVENT_PREVIOUS_TRACK)
+      {
+        send_key(HID_USAGE_CONSUMER_SCAN_PREVIOUS_TRACK);
+      }
+      else if (button_event == ButtonEvents::EVENT_PAUSE)
+      {
+        send_key(HID_USAGE_CONSUMER_PLAY_PAUSE);
+      }
+      else if (button_event == ButtonEvents::EVENT_NEXT_TRACK)
+      {
+        send_key(HID_USAGE_CONSUMER_SCAN_NEXT_TRACK);
+      }
+      else if (button_event == ButtonEvents::EVENT_MUTE)
+      {
+        send_key(HID_USAGE_CONSUMER_MUTE);
+      }
+
+      button_event = ButtonEvents::EVENT_NONE;
+      encoder_event = EncoderEvents::EVENT_NONE;
     }
-    process_encoder();
+
     vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
