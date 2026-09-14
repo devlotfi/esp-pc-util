@@ -13,31 +13,49 @@
 
 static const char *TAG_TINY_USB = "TINY_USB";
 
+enum
+{
+  ITF_NUM_HID = 0,
+  ITF_NUM_CDC,      // CDC control (notification) interface
+  ITF_NUM_CDC_DATA, // CDC data interface
+  ITF_NUM_TOTAL
+};
+
+#define EPNUM_HID 0x81       // IN
+#define EPNUM_CDC_NOTIF 0x82 // IN
+#define EPNUM_CDC_OUT 0x02   // OUT
+#define EPNUM_CDC_IN 0x83    // IN
+
 static const uint8_t hid_report_descriptor[] = {
     TUD_HID_REPORT_DESC_CONSUMER(),
 };
 
 #define TUSB_DESCRIPTOR_TOTAL_LEN \
-  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
+  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + TUD_CDC_DESC_LEN)
 
 static const uint8_t hid_configuration_descriptor[] = {
     TUD_CONFIG_DESCRIPTOR(
         1,                         // Configuration number
-        1,                         // Interface count
+        ITF_NUM_TOTAL,             // Interface count -> now 3
         0,                         // Configuration string index
         TUSB_DESCRIPTOR_TOTAL_LEN, // Total descriptor length
         TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP,
-        100 // Max power: 100 mA
-        ),
+        100),
+
     TUD_HID_DESCRIPTOR(
-        0,                     // Interface number
-        4,                     // String index
-        HID_ITF_PROTOCOL_NONE, // Non-boot HID
+        ITF_NUM_HID,
+        4, // String index
+        HID_ITF_PROTOCOL_NONE,
         sizeof(hid_report_descriptor),
-        0x81, // Interrupt IN endpoint
-        16,   // Endpoint size
-        10    // Polling interval: 10 ms
-        ),
+        EPNUM_HID,
+        16,
+        10),
+
+    TUD_CDC_DESCRIPTOR(
+        ITF_NUM_CDC,
+        5, // String index
+        EPNUM_CDC_NOTIF, 8,
+        EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
 };
 
 static const uint8_t language_descriptor[] = {
@@ -50,7 +68,8 @@ static const char *hid_string_descriptor[] = {
     "Espressif",                                         // 1: Manufacturer
     "ESP32-S3 esp-pc-util",                              // 2: Product
     "000001",                                            // 3: Serial number
-    "Consumer Control"                                   // 4: HID interface
+    "Consumer Control",                                  // 4: HID interface
+    "JSON Serial",                                       // 5: CDC interface
 };
 
 extern "C" uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)

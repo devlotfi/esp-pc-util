@@ -110,7 +110,7 @@ static void lvgl_task(void *arg)
 
     ESP_LOGI(TAG_LVGL_UI, "LVGL initialized");
 
-    while (1)
+    while (true)
     {
 
         uint32_t delay_ms =

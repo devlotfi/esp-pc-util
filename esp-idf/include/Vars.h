@@ -11,7 +11,9 @@
 #include "esp_lcd_ili9341.h"
 #include "lvgl.h"
 #include "Properties.h"
+#include "PsramAllocator.h"
 
 static esp_lcd_panel_handle_t panel_handle;
 static esp_lcd_panel_io_handle_t io_handle = NULL;
 static lv_display_t *lv_display = NULL;
+static PsramAllocator psramAllocator(512 * 1024);
