@@ -43,4 +43,10 @@ extern "C" void app_main(void)
         ESP_LOGE(TAG_LVGL_UI, "Failed to create LVGL task");
         return;
     }
+
+    while (true)
+    {
+        ESP_LOGI("lol", "lol");
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
 }
