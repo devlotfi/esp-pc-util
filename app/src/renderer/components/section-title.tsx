@@ -1,6 +1,7 @@
 import { cn } from "@heroui/react";
 import { type ComponentProps } from "react";
-import { type IconName, DynamicIcon } from "lucide-react/dynamic";
+import type { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function SectionTitle({
   children,
@@ -13,7 +14,7 @@ export function SectionTitle({
   labelProps: { className: classNameLabel, ...labelProps } = {},
   ...props
 }: {
-  icon: IconName;
+  icon: IconProp;
   iconWrapperProps?: ComponentProps<"div">;
   labelProps?: ComponentProps<"div">;
 } & ComponentProps<"div">) {
@@ -29,10 +30,10 @@ export function SectionTitle({
         )}
         {...iconWrapperProps}
       >
-        <DynamicIcon
-          name={icon}
+        <FontAwesomeIcon
+          icon={icon}
           className="text-accent size-[1.6rem]"
-        ></DynamicIcon>
+        ></FontAwesomeIcon>
       </div>
       <div
         className={cn("flex font-bold text-[16pt]", classNameLabel)}

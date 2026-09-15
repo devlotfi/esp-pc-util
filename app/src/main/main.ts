@@ -1,7 +1,14 @@
 import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import path from "path";
-import { ipcDefinition } from "../shared/ipc.ts";
+import {
+  ipcDefinition,
+  type ConnectPayload,
+  type SetLedPayload,
+} from "../shared/ipc.ts";
+import { JsonSerial } from "./json-serial.ts";
 import { SerialPort } from "serialport";
+
+let serial: JsonSerial | null = null;
 
 // Create a reference for the window so that it can be accessed later
 // Function to create the main window
@@ -59,6 +66,57 @@ app.whenReady().then(() => {
   ipcMain.handle(ipcDefinition.window.close, () => {
     mainWindow.close();
   });
+  ipcMain.handle(ipcDefinition.espPcUtil.listPorts, async () => {
+    const ports = await SerialPort.list();
+    return ports;
+  });
+  ipcMain.handle(ipcDefinition.espPcUtil.sendJson, (_, json: any) => {
+    if (serial) {
+      serial.send(json);
+    }
+  });
+  ipcMain.handle(
+    ipcDefinition.espPcUtil.connect,
+    async (_, payload: ConnectPayload) => {
+      if (serial) {
+        await serial.close();
+      }
+      serial = new JsonSerial({
+        path: payload.port,
+        baudRate: payload.baudRate,
+      });
+      serial.onConnected(() => {
+        mainWindow.webContents.send(ipcDefinition.espPcUtil.connected);
+      });
+      serial.onDisconnected(() => {
+        mainWindow.webContents.send(ipcDefinition.espPcUtil.closed);
+      });
+      serial.onError((error) => {
+        mainWindow.webContents.send(ipcDefinition.espPcUtil.error, {
+          message: error.message,
+        });
+      });
+      serial.onJson((json) => {
+        console.log("Received valid JSON:", json);
+        if (typeof json === "object" && json !== null && "type" in json) {
+          console.log("Message type:", json.type);
+          mainWindow.webContents.send(ipcDefinition.espPcUtil.json, json);
+        }
+      });
+    },
+  );
+  ipcMain.handle(ipcDefinition.espPcUtil.close, async () => {
+    if (serial) {
+      await serial.close();
+      serial = null;
+    }
+  });
+  ipcMain.handle(
+    ipcDefinition.espPcUtil.setLed,
+    (_, payload: SetLedPayload) => {
+      console.log(payload);
+    },
+  );
 
   // For macOS, create a window when the app is clicked if no other windows are open
   app.on("activate", () => {
@@ -73,17 +131,4 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
-});
-
-const port = new SerialPort({
-  path: "COM3",
-  baudRate: 115200,
-});
-
-port.on("error", function (err) {
-  console.log("Error: ", err.message);
-});
-
-port.on("data", function (data: Buffer) {
-  console.log("Data:", data.toString("utf-8"));
 });

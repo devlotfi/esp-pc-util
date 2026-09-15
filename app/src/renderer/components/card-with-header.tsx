@@ -1,9 +1,9 @@
 import { Card, cn, type CardProps } from "@heroui/react";
-import type { IconName } from "lucide-react/dynamic";
 import type { PropsWithChildren } from "react";
 import SectionHeader from "./section-header";
+import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 
-function CardTitle({ icon, title }: { icon: IconName; title: string }) {
+function CardTitle({ icon, title }: { icon: IconProp; title: string }) {
   return (
     <div className="flex flex-col">
       <SectionHeader
@@ -26,7 +26,7 @@ function CardTitle({ icon, title }: { icon: IconName; title: string }) {
 }
 
 interface CardWithTitleProps extends CardProps {
-  icon: IconName;
+  icon: IconProp;
   title: string;
 }
 

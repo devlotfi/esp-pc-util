@@ -11,39 +11,15 @@ static JsonSerial serial(
 
 static void onJson(JsonDocument &doc)
 {
-  const char *type = doc["type"];
-
-  if (type == nullptr)
-    return;
-
-  if (strcmp(type, "config") == 0)
-  {
-    int brightness =
-        doc["brightness"] | 0;
-
-    printf(
-        "Brightness: %d\n",
-        brightness);
-  }
-
-  if (strcmp(type, "command") == 0)
-  {
-    const char *command =
-        doc["command"];
-
-    if (command)
-    {
-      printf(
-          "Command: %s\n",
-          command);
-    }
-  }
+  char str[1024];
+  serializeJson(doc, str, sizeof(str));
+  ESP_LOGI(TAG_SERIAL_HANDLER, "%s", str);
 }
 
 static void serial_handler_task(void *arg)
 {
   ESP_LOGI(
-      TAG_LVGL_UI,
+      TAG_SERIAL_HANDLER,
       "Starting USB CDC serial");
 
   ESP_ERROR_CHECK(
@@ -52,7 +28,7 @@ static void serial_handler_task(void *arg)
   serial.onJson(onJson);
 
   ESP_LOGI(
-      TAG_LVGL_UI,
+      TAG_SERIAL_HANDLER,
       "USB CDC serial initialized");
 
   while (true)

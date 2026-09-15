@@ -24,7 +24,7 @@ export default function NotFound() {
             })
           }
         >
-          {t("login")}
+          {t("home")}
         </Button>
       </div>
     </div>

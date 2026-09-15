@@ -12,7 +12,9 @@ function RootComponent() {
     <React.Fragment>
       <RouteLoading></RouteLoading>
       <Titlebar></Titlebar>
-      <Outlet />
+      <div className="flex flex-1 bg-main">
+        <Outlet />
+      </div>
     </React.Fragment>
   );
 }

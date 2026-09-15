@@ -21,6 +21,24 @@ export default defineConfig({
     outDir: "dist/renderer",
     rolldownOptions: {
       input: "index.html",
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "fontawesome",
+              test: /node_modules\/@fortawesome/,
+            },
+            {
+              name: "heroui",
+              test: /node_modules\/@heroui/,
+            },
+            {
+              name: "mqtt",
+              test: /node_modules\/mqtt/,
+            },
+          ],
+        },
+      },
     },
   },
 });

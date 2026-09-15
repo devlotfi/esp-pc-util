@@ -1,3 +1,5 @@
 export const EN = {
-  title: "lol",
+  home: "lol",
+  notFound: "Not Found",
+  error: "Error",
 };

@@ -1,9 +1,10 @@
+import type { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn } from "@heroui/react";
-import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { type ComponentProps, type PropsWithChildren } from "react";
 
 interface SectionHeaderProps extends ComponentProps<"div"> {
-  icon: IconName;
+  icon: IconProp;
   iconProps?: {
     className: string;
   };
@@ -38,13 +39,13 @@ export default function SectionHeader({
         )}
         {...iconWrapperProps}
       >
-        <DynamicIcon
-          name={icon}
+        <FontAwesomeIcon
+          icon={icon}
           className={cn(
             "text-accent-foreground size-[2rem]",
             iconProps?.className,
           )}
-        ></DynamicIcon>
+        ></FontAwesomeIcon>
       </div>
       <div
         className={cn("flex font-bold text-[20pt]", classNameLabel)}

@@ -1,5 +1,5 @@
 import type { EN } from "./en";
 
-export const AR: typeof EN = {
-  title: "lol",
+export const AR: Partial<typeof EN> = {
+  home: "lol",
 };

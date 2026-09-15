@@ -166,3 +166,16 @@
 .titlebar-ui {
   -webkit-app-region: no-drag;
 }
+
+@utility bg-main {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(transparent 50%, var(--background)),
+    radial-gradient(
+      color-mix(in srgb, var(--foreground), transparent 92%) 2px,
+      transparent 2px
+    );
+  background-size:
+    100% 100%,
+    2rem 2rem;
+}
