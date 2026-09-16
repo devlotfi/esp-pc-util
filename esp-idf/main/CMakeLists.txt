@@ -5,6 +5,7 @@ idf_component_register(
     esp_driver_uart
     esp_driver_ledc
     nvs_flash
+    mbedtls
 )
 
 set_property(TARGET ${COMPONENT_LIB} PROPERTY CXX_STANDARD 23)
