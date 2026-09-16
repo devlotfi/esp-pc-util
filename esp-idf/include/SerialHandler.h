@@ -112,22 +112,6 @@ static bool decodeImageBase64(
   return true;
 }
 
-const lv_image_dsc_t wallpaper_img_dsc = {
-    .header = {
-        .magic = LV_IMAGE_HEADER_MAGIC,
-        .cf = LV_COLOR_FORMAT_RGB565,
-        .flags = 0,
-        .w = 320,
-        .h = 240,
-        .stride = 320 * 2,
-        .reserved_2 = 0,
-    },
-    .data_size = 153600,
-    .data = image_buffer,
-    .reserved = nullptr,
-    .reserved_2 = 0,
-};
-
 static void onImage(const char *type, size_t typeLen,
                     const char *base64, size_t base64Len)
 {

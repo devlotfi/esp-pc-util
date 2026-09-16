@@ -54,6 +54,7 @@ static void lvgl_flush_cb(
           px_map));
 }
 
+lv_obj_t *img = nullptr;
 static void ui()
 {
   lv_obj_t *screen =
@@ -63,6 +64,11 @@ static void ui()
       screen,
       lv_color_hex(0xFF00FF),
       0);
+
+  img = lv_image_create(screen);
+  lv_obj_set_pos(img, 0, 0);
+  lv_image_set_src(img, &wallpaper_img_dsc);
+  lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
 }
 
 static void lvgl_task(void *arg)
@@ -125,10 +131,7 @@ static void lvgl_task(void *arg)
 
   lv_obj_t *screen = lv_screen_active();
 
-  lv_obj_set_style_bg_color(
-      screen,
-      lv_color_hex(0x0000FF),
-      0);
+  ui();
 
   ESP_LOGI(TAG_LVGL_UI, "LVGL initialized");
 
@@ -137,10 +140,8 @@ static void lvgl_task(void *arg)
     if (testImg)
     {
       testImg = false;
-      lv_obj_set_style_bg_color(
-          screen,
-          lv_color_hex(0xFF0000),
-          0);
+      lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
+      lv_image_set_src(img, &wallpaper_img_dsc);
     }
 
     uint32_t delay_ms = lv_timer_handler();
