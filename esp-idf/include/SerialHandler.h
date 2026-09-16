@@ -19,6 +19,7 @@ public:
 
 static void onJson(JsonDocument &doc)
 {
+    ESP_LOGI(TAG_SERIAL_HANDLER, "RECIEVED JSON");
     if (!doc["type"].is<const char *>())
     {
         return;
@@ -63,6 +64,11 @@ static void onJson(JsonDocument &doc)
     ESP_LOGI(TAG_SERIAL_HANDLER, "%s", str);
 }
 
+static void onImage(const char *type, size_t typeLen, const char *base64, size_t base64Len)
+{
+    ESP_LOGI(TAG_SERIAL_HANDLER, "%s", "on image called");
+}
+
 static void serial_handler_task(void *arg)
 {
     ESP_LOGI(
@@ -73,6 +79,7 @@ static void serial_handler_task(void *arg)
         serial.begin());
 
     serial.onJson(onJson);
+    serial.onImage(onImage);
 
     ESP_LOGI(
         TAG_SERIAL_HANDLER,

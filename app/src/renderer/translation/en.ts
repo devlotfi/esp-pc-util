@@ -16,4 +16,10 @@ export const EN = {
   rgbLed: "RGB LED",
   brightness: "Brightness",
   save: "Save",
+  wallpaper: "Wallpaper",
+  crop1: "Drag & drop an image here",
+  crop2: "Or click to browse",
+  zoom: "Zoom",
+  rotation: "Rotation",
+  preview: "Preview",
 };

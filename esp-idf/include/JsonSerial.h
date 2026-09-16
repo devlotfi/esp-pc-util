@@ -19,8 +19,8 @@ public:
   static constexpr size_t USB_READ_BUFFER_SIZE = 512;
   static constexpr size_t MAX_JSON_SIZE = RX_BUFFER_SIZE;
 
-  using JsonCallback =
-      void (*)(JsonDocument &document);
+  using JsonCallback = void (*)(JsonDocument &document);
+  using ImageCallback = void (*)(const char *type, size_t typeLen, const char *base64, size_t base64Len);
 
   explicit JsonSerial(
       tinyusb_cdcacm_itf_t cdcPort = TINYUSB_CDC_ACM_0)
@@ -68,10 +68,8 @@ public:
     return tinyusb_cdcacm_init(&cdcConfig);
   }
 
-  void onJson(JsonCallback callback)
-  {
-    callback_ = callback;
-  }
+  void onJson(JsonCallback callback) { callback_ = callback; }
+  void onImage(ImageCallback callback) { imageCallback_ = callback; }
 
   void process()
   {
@@ -128,10 +126,13 @@ public:
 
 private:
   static constexpr size_t HEADER_SIZE = 4;
+  static constexpr const char *TYPE_KEY = "type";
+  static constexpr const char *IMAGE_KEY = "image";
+  static constexpr const char *WALLPAPER_TYPE = "SET_WALLPAPER";
 
   tinyusb_cdcacm_itf_t cdcPort_;
-
   JsonCallback callback_ = nullptr;
+  ImageCallback imageCallback_ = nullptr;
 
   uint8_t *rxBuffer_ = nullptr;
   uint8_t *txBuffer_ = nullptr;
@@ -213,16 +214,42 @@ private:
 
   void handleCompleteFrame()
   {
-    JsonDocument document(&psramAllocator);
+    const char *json = reinterpret_cast<const char *>(rxBuffer_);
+
+    // ---- Fast path: is this a SET_WALLPAPER frame? ----
+    size_t typeLen = 0;
+    const char *type = findStringValue(json, receivedLength_, TYPE_KEY, typeLen);
+
+    if (type != nullptr &&
+        typeLen == strlen(WALLPAPER_TYPE) &&
+        memcmp(type, WALLPAPER_TYPE, typeLen) == 0 &&
+        imageCallback_ != nullptr)
+    {
+      size_t imgLen = 0;
+      const char *img = findStringValue(json, receivedLength_, IMAGE_KEY, imgLen);
+
+      if (img != nullptr && imgLen > 0)
+      {
+        imageCallback_(type, typeLen, img, imgLen);
+      }
+      else
+      {
+        ESP_LOGE("JsonSerial", "SET_WALLPAPER frame missing 'image' field");
+      }
+      return;
+    }
+
+    // ---- Normal path: small JSON document ----
+    JsonDocument document(&spiRamAllocator);
 
     DeserializationError error =
-        deserializeJson(
-            document,
-            rxBuffer_,
-            receivedLength_);
+        deserializeJson(document, rxBuffer_, receivedLength_);
 
     if (error)
+    {
+      ESP_LOGE("JsonSerial", "JSON error: %s", error.c_str());
       return;
+    }
 
     if (callback_)
     {
@@ -310,5 +337,53 @@ private:
     headerBytes_ = 0;
     expectedLength_ = 0;
     receivedLength_ = 0;
+  }
+
+  static const char *findStringValue(const char *json, size_t jsonLen, const char *key, size_t &outLen)
+  {
+    outLen = 0;
+    if (json == nullptr || key == nullptr)
+      return nullptr;
+
+    const size_t keyLen = strlen(key);
+    if (keyLen == 0 || jsonLen < keyLen + 4)
+      return nullptr;
+
+    auto isWs = [](char c)
+    {
+      return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+    };
+
+    for (size_t i = 0; i + keyLen + 3 <= jsonLen; ++i)
+    {
+      if (json[i] != '"')
+        continue;
+      if (memcmp(json + i + 1, key, keyLen) != 0)
+        continue;
+      if (json[i + 1 + keyLen] != '"')
+        continue;
+
+      size_t j = i + 1 + keyLen + 1; // past the closing quote of the key
+      while (j < jsonLen && isWs(json[j]))
+        ++j;
+      if (j >= jsonLen || json[j] != ':')
+        continue;
+      ++j;
+      while (j < jsonLen && isWs(json[j]))
+        ++j;
+      if (j >= jsonLen || json[j] != '"')
+        continue;
+      ++j;
+
+      const size_t start = j;
+      while (j < jsonLen && json[j] != '"')
+        ++j;
+      if (j >= jsonLen)
+        return nullptr; // unterminated string
+
+      outLen = j - start;
+      return json + start;
+    }
+    return nullptr;
   }
 };

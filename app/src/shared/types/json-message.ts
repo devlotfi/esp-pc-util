@@ -4,4 +4,9 @@ interface SetLedMessage {
   brightness: number;
 }
 
-export type JsonMessage = SetLedMessage;
+interface SetWallpaperMessage {
+  type: "SET_WALLPAPER";
+  image: string;
+}
+
+export type JsonMessage = SetLedMessage | SetWallpaperMessage;

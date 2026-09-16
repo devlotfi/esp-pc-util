@@ -7,8 +7,8 @@ import { renderFlag } from "../../utils/render-flag";
 import CardWithTitle from "../card-with-header";
 import {
   faComputer,
-  faDisplay,
   faMoon,
+  faPaintBrush,
   faSun,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,7 +18,7 @@ export default function DisplaySettings() {
   const { t, i18n } = useTranslation();
 
   return (
-    <CardWithTitle icon={faDisplay} title={t("display")}>
+    <CardWithTitle icon={faPaintBrush} title={t("display")}>
       <div className="flex flex-col p-[1rem] gap-[1rem]">
         <Select
           value={themeOption}

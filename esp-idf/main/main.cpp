@@ -4,7 +4,7 @@
 #include "TinyUsbHid.h"
 #include "TftLcd.h"
 #include "LvglUI.h"
-#include "PsramAllocator.h"
+#include "SpiRamAllocator.h"
 #include "JsonSerial.h"
 #include "SerialHandler.h"
 #include "Validation.h"
