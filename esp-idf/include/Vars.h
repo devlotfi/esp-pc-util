@@ -18,6 +18,7 @@ static esp_lcd_panel_io_handle_t io_handle = NULL;
 static lv_display_t *lv_display = NULL;
 static SpiRamAllocator spiRamAllocator;
 
+static volatile bool testImg = false;
 static constexpr size_t IMAGE_WIDTH = 320;
 static constexpr size_t IMAGE_HEIGHT = 240;
 static constexpr size_t IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT * 2;

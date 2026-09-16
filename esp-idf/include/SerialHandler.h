@@ -137,10 +137,7 @@ static void onImage(const char *type, size_t typeLen,
     return;
   }
 
-  lv_obj_set_style_bg_color(
-      lv_screen_active(),
-      lv_color_hex(0xFF0000),
-      0);
+  testImg = true;
 
   ESP_LOGI(TAG_SERIAL_HANDLER, "image displayed");
 }

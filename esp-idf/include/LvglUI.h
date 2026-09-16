@@ -125,39 +125,25 @@ static void lvgl_task(void *arg)
 
   lv_obj_t *screen = lv_screen_active();
 
+  lv_obj_set_style_bg_color(
+      screen,
+      lv_color_hex(0x0000FF),
+      0);
+
   ESP_LOGI(TAG_LVGL_UI, "LVGL initialized");
-
-  uint32_t colors[] = {
-      0xFF0000, // red
-      0x00FF00, // green
-      0x0000FF, // blue
-      0xFFFFFF, // white
-      0x000000  // black
-  };
-
-  int color_index = 0;
 
   while (true)
   {
-    ESP_LOGI(TAG_LVGL_UI, "Setting color %d", color_index);
-
-    lv_obj_set_style_bg_color(
-        screen,
-        lv_color_hex(colors[color_index]),
-        0);
-
-    color_index++;
-
-    if (color_index >= 5)
+    if (testImg)
     {
-      color_index = 0;
+      testImg = false;
+      lv_obj_set_style_bg_color(
+          screen,
+          lv_color_hex(0xFF0000),
+          0);
     }
 
-    ESP_LOGI(TAG_LVGL_UI, "Before lv_timer_handler");
-
     uint32_t delay_ms = lv_timer_handler();
-
-    ESP_LOGI(TAG_LVGL_UI, "After lv_timer_handler");
 
     if (delay_ms < 1)
     {
@@ -169,6 +155,6 @@ static void lvgl_task(void *arg)
       delay_ms = 20;
     }
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(delay_ms));
   }
 }
