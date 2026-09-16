@@ -27,6 +27,7 @@
     "@tanstack/react-router": "^1.170.36",
     "@tanstack/react-router-devtools": "^1.167.2",
     "concurrently": "^10.0.5",
+    "formik": "^2.4.9",
     "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.2.1",
     "motion": "^13.2.0",
@@ -35,7 +36,8 @@
     "react-i18next": "^17.0.14",
     "serialport": "^13.0.0",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.13"
+    "tsx": "^4.23.13",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,42 +1,29 @@
-import type { PortInfo } from "./types/port-info";
-
 export const ipcDefinition = {
   window: {
-    minimize: "invoke/window/minimize",
-    maximize: "invoke/window/maximize",
-    close: "invoke/window/close",
+    invoke: {
+      minimize: "window/minimize",
+      maximize: "window/maximize",
+      close: "window/close",
+    },
   },
   espPcUtil: {
-    listPorts: "invoke/esp-pc-util/list-ports",
-    connect: "invoke/esp-pc-util/connect",
-    close: "invoke/esp-pc-util/close",
-    sendJson: "invoke/esp-pc-util/send-json",
-    connected: "event/esp-pc-util/connected",
-    closed: "event/esp-pc-util/closed",
-    error: "event/esp-pc-util/error",
-    json: "event/esp-pc-util/json",
-    setLed: "invoke/esp-pc-util/set-led",
+    invoke: {
+      listPorts: "esp-pc-util/list-ports",
+      connect: "esp-pc-util/connect",
+      close: "esp-pc-util/close",
+      sendJson: "esp-pc-util/send-json",
+      setLed: "esp-pc-util/set-led",
+    },
+    events: {
+      mainToRenderer: {
+        connected: "esp-pc-util/connected",
+        closed: "esp-pc-util/closed",
+        error: "esp-pc-util/error",
+        json: "esp-pc-util/json",
+      },
+    },
   },
 } as const;
-
-export interface ElectronAPI {
-  window: {
-    minimize(): Promise<void>;
-    maximize(): Promise<void>;
-    close(): Promise<void>;
-  };
-  espPcUtil: {
-    listPorts(): Promise<PortInfo>;
-    setLed(payload: SetLedPayload): Promise<void>;
-    connect(payload: ConnectPayload): Promise<void>;
-    close(): Promise<void>;
-    sendJson<T = any>(json: T): Promise<void>;
-    onConnected(callback: () => void): () => void;
-    onDisconnected(callback: () => void): () => void;
-    onError(callback: (error: { message: string }) => void): () => void;
-    onJson(callback: (json: unknown) => void): () => void;
-  };
-}
 
 export type BaudRate =
   | 110
@@ -67,11 +54,6 @@ export type BaudRate =
   | 2500000
   | 3000000
   | 4000000;
-
-export interface SetLedPayload {
-  color: string;
-  brightness: number;
-}
 
 export interface ConnectPayload {
   port: string;

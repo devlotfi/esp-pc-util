@@ -1,38 +1,46 @@
 import { contextBridge, ipcRenderer } from "electron";
-import {
-  ipcDefinition,
-  type ConnectPayload,
-  type ElectronAPI,
-  type SetLedPayload,
-} from "../shared/ipc.ts";
+import { ipcDefinition, type ConnectPayload } from "../shared/ipc.ts";
+import type { JsonMessage } from "../shared/types/json-message.ts";
+import type { PortInfo } from "../shared/types/port-info.ts";
 
-contextBridge.exposeInMainWorld("electronAPI", {
+export const electronApi = {
   window: {
-    minimize: () => ipcRenderer.invoke(ipcDefinition.window.minimize),
-    maximize: () => ipcRenderer.invoke(ipcDefinition.window.maximize),
-    close: () => ipcRenderer.invoke(ipcDefinition.window.close),
+    minimize: () => ipcRenderer.invoke(ipcDefinition.window.invoke.minimize),
+    maximize: () => ipcRenderer.invoke(ipcDefinition.window.invoke.maximize),
+    close: () => ipcRenderer.invoke(ipcDefinition.window.invoke.close),
   },
   espPcUtil: {
-    setLed: (payload: SetLedPayload) =>
-      ipcRenderer.invoke(ipcDefinition.espPcUtil.setLed, payload),
-    listPorts: () => ipcRenderer.invoke(ipcDefinition.espPcUtil.listPorts),
+    listPorts: (): Promise<PortInfo[]> =>
+      ipcRenderer.invoke(ipcDefinition.espPcUtil.invoke.listPorts),
     connect: (payload: ConnectPayload) =>
-      ipcRenderer.invoke(ipcDefinition.espPcUtil.connect, payload),
-    close: () => ipcRenderer.invoke(ipcDefinition.espPcUtil.close),
-    sendJson: (json: any) =>
-      ipcRenderer.invoke(ipcDefinition.espPcUtil.sendJson, json),
+      ipcRenderer.invoke(ipcDefinition.espPcUtil.invoke.connect, payload),
+    close: () => ipcRenderer.invoke(ipcDefinition.espPcUtil.invoke.close),
+    sendJson: (json: JsonMessage) =>
+      ipcRenderer.invoke(ipcDefinition.espPcUtil.invoke.sendJson, json),
     onConnected(callback: () => void) {
       const listener = () => callback();
-      ipcRenderer.on(ipcDefinition.espPcUtil.connected, listener);
+      ipcRenderer.on(
+        ipcDefinition.espPcUtil.events.mainToRenderer.connected,
+        listener,
+      );
       return () => {
-        ipcRenderer.removeListener(ipcDefinition.espPcUtil.connected, listener);
+        ipcRenderer.removeListener(
+          ipcDefinition.espPcUtil.events.mainToRenderer.connected,
+          listener,
+        );
       };
     },
     onDisconnected(callback: () => void) {
       const listener = () => callback();
-      ipcRenderer.on(ipcDefinition.espPcUtil.closed, listener);
+      ipcRenderer.on(
+        ipcDefinition.espPcUtil.events.mainToRenderer.closed,
+        listener,
+      );
       return () => {
-        ipcRenderer.removeListener(ipcDefinition.espPcUtil.closed, listener);
+        ipcRenderer.removeListener(
+          ipcDefinition.espPcUtil.events.mainToRenderer.closed,
+          listener,
+        );
       };
     },
     onError(callback: (error: { message: string }) => void) {
@@ -42,19 +50,33 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ) => {
         callback(error);
       };
-      ipcRenderer.on(ipcDefinition.espPcUtil.error, listener);
+      ipcRenderer.on(
+        ipcDefinition.espPcUtil.events.mainToRenderer.error,
+        listener,
+      );
       return () => {
-        ipcRenderer.removeListener(ipcDefinition.espPcUtil.error, listener);
+        ipcRenderer.removeListener(
+          ipcDefinition.espPcUtil.events.mainToRenderer.error,
+          listener,
+        );
       };
     },
     onJson(callback: (json: unknown) => void) {
       const listener = (_event: Electron.IpcRendererEvent, json: unknown) => {
         callback(json);
       };
-      ipcRenderer.on(ipcDefinition.espPcUtil.json, listener);
+      ipcRenderer.on(
+        ipcDefinition.espPcUtil.events.mainToRenderer.json,
+        listener,
+      );
       return () => {
-        ipcRenderer.removeListener(ipcDefinition.espPcUtil.json, listener);
+        ipcRenderer.removeListener(
+          ipcDefinition.espPcUtil.events.mainToRenderer.json,
+          listener,
+        );
       };
     },
   },
-} satisfies ElectronAPI);
+};
+
+contextBridge.exposeInMainWorld("electronAPI", electronApi);

@@ -15,7 +15,7 @@
 class JsonSerial
 {
 public:
-  static constexpr size_t RX_BUFFER_SIZE = 64 * 1024;
+  static constexpr size_t RX_BUFFER_SIZE = 256 * 1024;
   static constexpr size_t USB_READ_BUFFER_SIZE = 512;
   static constexpr size_t MAX_JSON_SIZE = RX_BUFFER_SIZE;
 

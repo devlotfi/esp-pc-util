@@ -10,8 +10,8 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen.ts";
 import { ThemeProvider } from "./provider/theme-provider.tsx";
-import AppProvider from "./provider/app-provider.tsx";
 import NotFound from "./components/not-found.tsx";
+import SerialProvider from "./provider/serial-provider.tsx";
 
 const history = createHashHistory();
 
@@ -34,9 +34,9 @@ createRoot(document.getElementById("root")!).render(
     <div className="flex flex-col min-h-dvh min-w-dvw max-h-dvh max-w-dvw overflow-hidden bg-background">
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <AppProvider>
+          <SerialProvider>
             <RouterProvider router={router}></RouterProvider>
-          </AppProvider>
+          </SerialProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </div>

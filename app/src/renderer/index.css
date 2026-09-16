@@ -58,6 +58,10 @@
   .autocomplete__trigger {
     @apply bg-background border border-border;
   }
+
+  .color-input-group {
+    @apply border border-border bg-background;
+  }
 }
 
 @layer base {

@@ -1,12 +1,9 @@
 import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import path from "path";
-import {
-  ipcDefinition,
-  type ConnectPayload,
-  type SetLedPayload,
-} from "../shared/ipc.ts";
+import { ipcDefinition, type ConnectPayload } from "../shared/ipc.ts";
 import { JsonSerial } from "./json-serial.ts";
 import { SerialPort } from "serialport";
+import type { JsonMessage } from "../shared/types/json-message.ts";
 
 let serial: JsonSerial | null = null;
 
@@ -53,70 +50,88 @@ app.whenReady().then(() => {
     if (mainWindow) mainWindow.reload();
   });
 
-  ipcMain.handle(ipcDefinition.window.minimize, () => {
+  ipcMain.handle(ipcDefinition.window.invoke.minimize, () => {
     mainWindow.minimize();
   });
-  ipcMain.handle(ipcDefinition.window.maximize, () => {
+
+  ipcMain.handle(ipcDefinition.window.invoke.maximize, () => {
     if (mainWindow.isMaximized()) {
       mainWindow.unmaximize();
     } else {
       mainWindow.maximize();
     }
   });
-  ipcMain.handle(ipcDefinition.window.close, () => {
+
+  ipcMain.handle(ipcDefinition.window.invoke.close, () => {
     mainWindow.close();
   });
-  ipcMain.handle(ipcDefinition.espPcUtil.listPorts, async () => {
+
+  ipcMain.handle(ipcDefinition.espPcUtil.invoke.listPorts, async () => {
     const ports = await SerialPort.list();
     return ports;
   });
-  ipcMain.handle(ipcDefinition.espPcUtil.sendJson, (_, json: any) => {
-    if (serial) {
-      serial.send(json);
-    }
-  });
+
   ipcMain.handle(
-    ipcDefinition.espPcUtil.connect,
+    ipcDefinition.espPcUtil.invoke.sendJson,
+    (_, json: JsonMessage) => {
+      if (serial) {
+        serial.send(json);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    ipcDefinition.espPcUtil.invoke.connect,
     async (_, payload: ConnectPayload) => {
       if (serial) {
         await serial.close();
       }
+
       serial = new JsonSerial({
         path: payload.port,
         baudRate: payload.baudRate,
       });
+
       serial.onConnected(() => {
-        mainWindow.webContents.send(ipcDefinition.espPcUtil.connected);
+        mainWindow.webContents.send(
+          ipcDefinition.espPcUtil.events.mainToRenderer.connected,
+        );
       });
+
       serial.onDisconnected(() => {
-        mainWindow.webContents.send(ipcDefinition.espPcUtil.closed);
+        mainWindow.webContents.send(
+          ipcDefinition.espPcUtil.events.mainToRenderer.closed,
+        );
       });
+
       serial.onError((error) => {
-        mainWindow.webContents.send(ipcDefinition.espPcUtil.error, {
-          message: error.message,
-        });
+        mainWindow.webContents.send(
+          ipcDefinition.espPcUtil.events.mainToRenderer.error,
+          {
+            message: error.message,
+          },
+        );
       });
+
       serial.onJson((json) => {
         console.log("Received valid JSON:", json);
         if (typeof json === "object" && json !== null && "type" in json) {
           console.log("Message type:", json.type);
-          mainWindow.webContents.send(ipcDefinition.espPcUtil.json, json);
+          mainWindow.webContents.send(
+            ipcDefinition.espPcUtil.events.mainToRenderer.json,
+            json,
+          );
         }
       });
     },
   );
-  ipcMain.handle(ipcDefinition.espPcUtil.close, async () => {
+
+  ipcMain.handle(ipcDefinition.espPcUtil.invoke.close, async () => {
     if (serial) {
       await serial.close();
       serial = null;
     }
   });
-  ipcMain.handle(
-    ipcDefinition.espPcUtil.setLed,
-    (_, payload: SetLedPayload) => {
-      console.log(payload);
-    },
-  );
 
   // For macOS, create a window when the app is clicked if no other windows are open
   app.on("activate", () => {

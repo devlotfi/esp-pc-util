@@ -1,21 +1,61 @@
-import { Button } from "@heroui/react";
+import { Button, Chip } from "@heroui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faPlugCircleCheck,
+  faPlugCircleXmark,
   faTimes,
   faWindowMaximize,
   faWindowMinimize,
 } from "@fortawesome/free-solid-svg-icons";
 import LogoSVG from "./svg/LogoSVG";
+import { useContext } from "react";
+import { SerialContext } from "../context/serial-context";
+import { useTranslation } from "react-i18next";
+import { useMutation } from "@tanstack/react-query";
 
 export default function Titlebar() {
+  const { t } = useTranslation();
+  const { connected } = useContext(SerialContext);
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => {
+      await window.electronAPI.espPcUtil.close();
+    },
+  });
+
   return (
-    <div className="titlebar flex justify-between items-center px-[0.8rem] h-[3.5rem]">
-      <div className="flex items-center gap-[1rem]">
+    <div className="titlebar flex relative justify-center items-center h-[3.5rem]">
+      <div className="flex left-[0.8rem] absolute items-center gap-[1rem]">
         <LogoSVG className="h-[2rem]"></LogoSVG>
         <div className="flex font-medium">ESP PC Util</div>
       </div>
 
       <div className="titlebar-ui flex items-center gap-[0.5rem]">
+        {connected ? (
+          <Chip size="lg" variant="primary" color="success">
+            <FontAwesomeIcon icon={faPlugCircleCheck}></FontAwesomeIcon>
+            <Chip.Label>{t("connected")}</Chip.Label>
+          </Chip>
+        ) : (
+          <Chip size="lg" variant="primary" color="danger">
+            <FontAwesomeIcon icon={faPlugCircleXmark}></FontAwesomeIcon>
+            <Chip.Label>{t("disconnected")}</Chip.Label>
+          </Chip>
+        )}
+
+        {connected ? (
+          <Button
+            isIconOnly
+            size="sm"
+            variant="outline"
+            onPress={() => mutate()}
+          >
+            <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="titlebar-ui flex right-[0.8rem] absolute items-center gap-[0.5rem]">
         <Button
           isIconOnly
           variant="outline"
@@ -30,10 +70,12 @@ export default function Titlebar() {
         >
           <FontAwesomeIcon icon={faWindowMaximize}></FontAwesomeIcon>
         </Button>
+
         <Button
           isIconOnly
           variant="outline"
-          onPress={async () => await window.electronAPI.window.close()}
+          onPress={() => mutate()}
+          isPending={isPending}
         >
           <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>
         </Button>

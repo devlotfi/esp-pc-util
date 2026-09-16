@@ -7,6 +7,10 @@
 #include "PsramAllocator.h"
 #include "JsonSerial.h"
 #include "SerialHandler.h"
+#include "Validation.h"
+#include "Led.h"
+#include "NvsStorage.h"
+#include "preferences/Led.h"
 #include "my_image.h"
 
 static const char *TAG_MAIN = "GPIO";
@@ -14,6 +18,8 @@ static const char *TAG_MAIN = "GPIO";
 extern "C" void app_main(void)
 {
     setup_gpio();
+    setup_nvs();
+    setup_led();
     setup_tinyusb();
     setup_tft_lcd();
     setup_tft_brightness();

@@ -32,7 +32,7 @@ export function SectionTitle({
       >
         <FontAwesomeIcon
           icon={icon}
-          className="text-accent size-[1.6rem]"
+          className="text-accent text-[15pt]"
         ></FontAwesomeIcon>
       </div>
       <div

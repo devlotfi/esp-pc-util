@@ -1,9 +1,9 @@
-import type { ElectronAPI } from "../shared/ipc";
+import type { electronApi } from "../preload/preload";
 
 export {}; // Ensure this file is treated as a module
 
 declare global {
   interface Window {
-    electronAPI: ElectronAPI;
+    electronAPI: typeof electronApi;
   }
 }

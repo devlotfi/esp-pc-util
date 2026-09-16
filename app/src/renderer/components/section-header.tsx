@@ -42,7 +42,7 @@ export default function SectionHeader({
         <FontAwesomeIcon
           icon={icon}
           className={cn(
-            "text-accent-foreground size-[2rem]",
+            "text-accent-foreground text-[18pt]",
             iconProps?.className,
           )}
         ></FontAwesomeIcon>
