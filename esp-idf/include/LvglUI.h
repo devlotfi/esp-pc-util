@@ -139,7 +139,6 @@ static void lvgl_task(void *arg)
 
   while (true)
   {
-    color_index++;
     ESP_LOGI(TAG_LVGL_UI, "Setting color %d", color_index);
 
     lv_obj_set_style_bg_color(
@@ -147,7 +146,18 @@ static void lvgl_task(void *arg)
         lv_color_hex(colors[color_index]),
         0);
 
+    color_index++;
+
+    if (color_index >= 5)
+    {
+      color_index = 0;
+    }
+
+    ESP_LOGI(TAG_LVGL_UI, "Before lv_timer_handler");
+
     uint32_t delay_ms = lv_timer_handler();
+
+    ESP_LOGI(TAG_LVGL_UI, "After lv_timer_handler");
 
     if (delay_ms < 1)
     {
