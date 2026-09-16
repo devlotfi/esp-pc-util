@@ -11,7 +11,6 @@
 #include "Led.h"
 #include "NvsStorage.h"
 #include "preferences/Led.h"
-#include "my_image.h"
 
 static const char *TAG_MAIN = "GPIO";
 
@@ -30,7 +29,7 @@ extern "C" void app_main(void)
         "tiny_usb",
         4096,
         nullptr,
-        7,
+        5,
         nullptr);
     if (task_result_tiny_usb != pdPASS)
     {
@@ -64,15 +63,5 @@ extern "C" void app_main(void)
     {
         ESP_LOGE(TAG_TINY_USB, "Failed to create serial handler task");
         abort();
-    }
-
-    while (true)
-    {
-        JsonDocument doc;
-        doc["type"] = "status";
-        doc["connected"] = true;
-        doc["volume"] = 75;
-        serial.send(doc);
-        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }

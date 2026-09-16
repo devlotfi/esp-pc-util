@@ -4,6 +4,7 @@ idf_component_register(
   REQUIRES 
     esp_driver_uart
     esp_driver_ledc
+    esp_timer
     nvs_flash
     mbedtls
 )
