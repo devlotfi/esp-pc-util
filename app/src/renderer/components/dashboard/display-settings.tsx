@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import CardWithTitle from "../card-with-header";
-import { faLightbulb, faSave, faTv } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faTv } from "@fortawesome/free-solid-svg-icons";
 import {
   Button,
   ColorArea,

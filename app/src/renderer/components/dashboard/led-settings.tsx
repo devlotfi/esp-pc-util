@@ -16,11 +16,10 @@ import { useFormik } from "formik";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import type { JsonMessage } from "../../../shared/types/json-message";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function LedSettings() {
   const { t } = useTranslation();
-  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
 
   const formik = useFormik({
     enableReinitialize: true,
