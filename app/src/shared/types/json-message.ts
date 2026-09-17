@@ -25,9 +25,27 @@ interface PcStatsMessage {
   ram: number;
 }
 
+interface GetDataMessage {
+  type: "GET_DATA";
+}
+
+interface GetDataResponseMessage {
+  type: "GET_DATA_RESPONSE";
+  led: {
+    color: string;
+    brightness: number;
+  };
+  display: {
+    accentColor: string;
+    brightness: number;
+  };
+}
+
 export type JsonMessage =
   | SetLedMessage
   | SetDisplayMessage
   | SetWallpaperMessage
   | SetWallpaperCompletedMessage
-  | PcStatsMessage;
+  | PcStatsMessage
+  | GetDataMessage
+  | GetDataResponseMessage;

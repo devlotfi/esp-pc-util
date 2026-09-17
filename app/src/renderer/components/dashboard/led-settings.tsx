@@ -16,9 +16,11 @@ import { useFormik } from "formik";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import type { JsonMessage } from "../../../shared/types/json-message";
+import { useEffect, useState } from "react";
 
 export default function LedSettings() {
   const { t } = useTranslation();
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -44,6 +46,23 @@ export default function LedSettings() {
       });
     },
   });
+
+  useEffect(() => {
+    window.electronAPI.espPcUtil.sendJson({
+      type: "GET_DATA",
+    });
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.espPcUtil.onJson((json) => {
+      console.log("json", json);
+      if (json.type === "GET_DATA_RESPONSE") {
+        formik.setFieldValue("color", parseColor(json.led.color));
+        formik.setFieldValue("brightness", json.led.brightness);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <CardWithTitle icon={faLightbulb} title={t("rgbLed")}>

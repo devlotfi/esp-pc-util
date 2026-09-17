@@ -23,6 +23,22 @@ static void sendSetWallpaperCompletedMessage()
   serial.send(doc);
 }
 
+static void sendGetDataResponseMessage()
+{
+  LedData *ledData = loadLedData();
+  DisplayData *displayData = loadDisplayData();
+
+  JsonDocument doc(&spiRamAllocator);
+  doc["type"] = MessageTypes::GET_DATA_RESPONSE;
+  auto led = doc["led"].to<JsonObject>();
+  led["color"] = ledData->color;
+  led["brightness"] = ledData->brightness;
+  auto display = doc["display"].to<JsonObject>();
+  display["accentColor"] = displayData->accent_color;
+  display["brightness"] = displayData->brightness;
+  serial.send(doc);
+}
+
 static void onJson(JsonDocument &doc)
 {
   ESP_LOGI(TAG_SERIAL_HANDLER, "RECIEVED JSON");
@@ -101,6 +117,10 @@ static void onJson(JsonDocument &doc)
     lvglMessage.data.setStatsLvglMessage.cpu = cpu;
     lvglMessage.data.setStatsLvglMessage.ram = ram;
     xQueueSend(lvgl_message_queue_handle, &lvglMessage, 0);
+  }
+  else if (strcmp(type, MessageTypes::GET_DATA) == 0)
+  {
+    sendGetDataResponseMessage();
   }
   else
   {

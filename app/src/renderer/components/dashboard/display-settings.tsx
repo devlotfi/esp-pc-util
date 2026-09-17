@@ -16,6 +16,7 @@ import { useFormik } from "formik";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import type { JsonMessage } from "../../../shared/types/json-message";
+import { useEffect } from "react";
 
 export default function DisplaySettings() {
   const { t } = useTranslation();
@@ -44,6 +45,26 @@ export default function DisplaySettings() {
       });
     },
   });
+
+  useEffect(() => {
+    window.electronAPI.espPcUtil.sendJson({
+      type: "GET_DATA",
+    });
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.espPcUtil.onJson((json) => {
+      console.log("json", json);
+      if (json.type === "GET_DATA_RESPONSE") {
+        formik.setFieldValue(
+          "accentColor",
+          parseColor(json.display.accentColor),
+        );
+        formik.setFieldValue("brightness", json.display.brightness);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <CardWithTitle icon={faTv} title={t("display")}>

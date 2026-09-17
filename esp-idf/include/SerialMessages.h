@@ -10,6 +10,7 @@ public:
   static constexpr const char *SET_DISPLAY = "SET_DISPLAY";
   static constexpr const char *PC_STATS = "PC_STATS";
   static constexpr const char *GET_DATA = "GET_DATA";
+  static constexpr const char *GET_DATA_RESPONSE = "GET_DATA_RESPONSE";
   static constexpr const char *SET_WALLPAPER = "SET_WALLPAPER";
   static constexpr const char *SET_WALLPAPER_COMPLETED = "SET_WALLPAPER_COMPLETED";
 };
