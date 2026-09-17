@@ -5,11 +5,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-
 #include "esp_err.h"
 #include "esp_heap_caps.h"
 #include "tinyusb_cdc_acm.h"
-
+#include "SerialMessages.h"
 #include "Vars.h"
 
 class JsonSerial
@@ -128,7 +127,6 @@ private:
   static constexpr size_t HEADER_SIZE = 4;
   static constexpr const char *TYPE_KEY = "type";
   static constexpr const char *IMAGE_KEY = "image";
-  static constexpr const char *WALLPAPER_TYPE = "SET_WALLPAPER";
 
   tinyusb_cdcacm_itf_t cdcPort_;
   JsonCallback callback_ = nullptr;
@@ -221,8 +219,8 @@ private:
     const char *type = findStringValue(json, receivedLength_, TYPE_KEY, typeLen);
 
     if (type != nullptr &&
-        typeLen == strlen(WALLPAPER_TYPE) &&
-        memcmp(type, WALLPAPER_TYPE, typeLen) == 0 &&
+        typeLen == strlen(MessageTypes::SET_WALLPAPER) &&
+        memcmp(type, MessageTypes::SET_WALLPAPER, typeLen) == 0 &&
         imageCallback_ != nullptr)
     {
       size_t imgLen = 0;

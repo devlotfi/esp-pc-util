@@ -5,6 +5,7 @@
 #include "TftLcd.h"
 #include "LvglUI.h"
 #include "SpiRamAllocator.h"
+#include "SerialMessages.h"
 #include "JsonSerial.h"
 #include "SerialHandler.h"
 #include "Validation.h"

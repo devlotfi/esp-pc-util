@@ -7,18 +7,20 @@
 #include "JsonSerial.h"
 #include "Validation.h"
 #include "Led.h"
+#include "SpiRamAllocator.h"
+#include "SerialMessages.h"
 #include "preferences/Wallpaper.h"
 
 static const char *TAG_SERIAL_HANDLER = "SERIAL_HANDLER";
 
 static JsonSerial serial(TINYUSB_CDC_ACM_0);
 
-class MessageTypes
+static void sendSetWallpaperCompletedMessage()
 {
-public:
-  static constexpr const char *SET_LED = "SET_LED";
-  static constexpr const char *GET_DATA = "GET_DATA";
-};
+  JsonDocument doc(&spiRamAllocator);
+  doc["type"] = MessageTypes::SET_WALLPAPER_COMPLETED;
+  serial.send(doc);
+}
 
 static void onJson(JsonDocument &doc)
 {
@@ -67,18 +69,6 @@ static void onJson(JsonDocument &doc)
   ESP_LOGI(TAG_SERIAL_HANDLER, "%s", str);
 }
 
-static inline uint16_t rgb565_swap_rb(uint16_t v)
-{
-  return (uint16_t)((v & 0x07E0)             // keep green
-                    | ((v & 0x001F) << 11)   // B → R
-                    | ((v & 0xF800) >> 11)); // R → B
-}
-
-static inline uint16_t swap16(uint16_t v)
-{
-  return (uint16_t)((v << 8) | (v >> 8));
-}
-
 static bool decodeImageBase64(
     const char *base64,
     size_t base64_length)
@@ -120,6 +110,7 @@ static void onImage(const char *type, size_t typeLen,
   }
 
   saveWallpaperData();
+  sendSetWallpaperCompletedMessage();
   testImg = true;
 
   ESP_LOGI(TAG_SERIAL_HANDLER, "image displayed");
