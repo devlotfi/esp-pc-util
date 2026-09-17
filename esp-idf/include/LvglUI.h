@@ -13,49 +13,222 @@
 #include "lvgl.h"
 #include "Properties.h"
 #include "Vars.h"
+#include "Utils.h"
 #include "preferences/Wallpaper.h"
+#include "preferences/Display.h"
 
 static const char *TAG_LVGL_UI = "LVGL_UI";
 
-static volatile uint32_t flush_ready_count = 0;
-static void lvgl_tick_timer_cb(void *arg)
+// ============================================================
+// Dashboard
+// 320 x 240
+// ============================================================
+
+static lv_obj_t *wallpaper = nullptr;
+static lv_obj_t *cpu_gauge;
+static lv_obj_t *ram_gauge;
+static lv_obj_t *cpu_value_label;
+static lv_obj_t *ram_value_label;
+
+// ------------------------------------------------------------
+// Create a single card
+// ------------------------------------------------------------
+
+static lv_obj_t *create_card(
+    lv_obj_t *parent,
+    const char *title,
+    int value,
+    lv_obj_t **gauge_out,
+    lv_obj_t **value_label_out)
 {
-  lv_tick_inc(5); // must match the timer period below
+  // Card
+  lv_obj_t *card = lv_obj_create(parent);
+
+  lv_obj_set_size(card, 135, 155);
+
+  lv_obj_set_style_radius(card, 16, 0);
+
+  // Semi-transparent background
+  lv_obj_set_style_bg_color(
+      card,
+      lv_color_hex(0x1E293B),
+      0);
+
+  lv_obj_set_style_bg_opa(
+      card,
+      LV_OPA_80,
+      0);
+
+  // Border
+  lv_obj_set_style_border_width(card, 1, 0);
+  lv_obj_set_style_border_color(
+      card,
+      lv_color_hex(0x64748B),
+      0);
+
+  lv_obj_set_style_border_opa(
+      card,
+      LV_OPA_50,
+      0);
+
+  lv_obj_set_style_pad_all(card, 0, 0);
+
+  lv_obj_remove_flag(
+      card,
+      LV_OBJ_FLAG_SCROLLABLE);
+
+  // --------------------------------------------------------
+  // Title
+  // --------------------------------------------------------
+
+  lv_obj_t *title_label = lv_label_create(card);
+
+  lv_label_set_text(title_label, title);
+
+  lv_obj_set_style_text_color(
+      title_label,
+      lv_color_hex(0xCBD5E1),
+      0);
+
+  lv_obj_set_style_text_font(
+      title_label,
+      &lv_font_montserrat_14,
+      0);
+
+  lv_obj_align(
+      title_label,
+      LV_ALIGN_TOP_MID,
+      0,
+      10);
+
+  // --------------------------------------------------------
+  // Gauge
+  // --------------------------------------------------------
+
+  lv_obj_t *gauge = lv_arc_create(card);
+
+  lv_obj_set_size(gauge, 115, 115);
+
+  lv_obj_align(
+      gauge,
+      LV_ALIGN_TOP_MID,
+      0,
+      38);
+
+  lv_arc_set_range(gauge, 0, 100);
+  lv_arc_set_value(gauge, value);
+
+  lv_arc_set_rotation(gauge, 135);
+  lv_arc_set_bg_angles(gauge, 0, 270);
+
+  // Background arc
+  lv_obj_set_style_arc_color(
+      gauge,
+      lv_color_hex(0x3f5068),
+      LV_PART_MAIN);
+
+  lv_obj_set_style_arc_width(
+      gauge,
+      10,
+      LV_PART_MAIN);
+
+  // Indicator
+  DisplayData *displayData = loadDisplayData();
+  lv_obj_set_style_arc_color(
+      gauge,
+      lv_color_hex(hexColor(displayData->accent_color)),
+      LV_PART_INDICATOR);
+
+  lv_obj_set_style_arc_width(
+      gauge,
+      10,
+      LV_PART_INDICATOR);
+
+  // No knob
+  lv_obj_remove_style(
+      gauge,
+      NULL,
+      LV_PART_KNOB);
+
+  // --------------------------------------------------------
+  // Value
+  // --------------------------------------------------------
+
+  lv_obj_t *value_label = lv_label_create(card);
+
+  lv_label_set_text_fmt(
+      value_label,
+      "%d%%",
+      value);
+
+  lv_obj_set_style_text_color(
+      value_label,
+      lv_color_hex(0xF8FAFC),
+      0);
+
+  lv_obj_set_style_text_font(
+      value_label,
+      &lv_font_montserrat_20,
+      0);
+
+  lv_obj_align(
+      value_label,
+      LV_ALIGN_TOP_MID,
+      0,
+      82);
+
+  *gauge_out = gauge;
+  *value_label_out = value_label;
+
+  return card;
 }
 
-static esp_timer_handle_t lvgl_tick_timer = nullptr;
+// ------------------------------------------------------------
+// Create dashboard
+// ------------------------------------------------------------
 
-static bool notify_lvgl_flush_ready(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_event_data_t *edata, void *user_ctx)
+static void create_dashboard(lv_obj_t *parent)
 {
-  flush_ready_count = flush_ready_count + 1;
-  if (lv_display != NULL)
-  {
-    lv_display_flush_ready(lv_display);
-  }
-  return false;
+  // Background
+  lv_obj_set_style_bg_color(
+      parent,
+      lv_color_hex(0x0F172A),
+      0);
+
+  lv_obj_set_style_bg_opa(
+      parent,
+      LV_OPA_COVER,
+      0);
+
+  // CPU card
+  lv_obj_t *cpu_card = create_card(
+      parent,
+      "CPU",
+      42,
+      &cpu_gauge,
+      &cpu_value_label);
+
+  lv_obj_align(
+      cpu_card,
+      LV_ALIGN_LEFT_MID,
+      18,
+      0);
+
+  // RAM card
+  lv_obj_t *ram_card = create_card(
+      parent,
+      "RAM",
+      68,
+      &ram_gauge,
+      &ram_value_label);
+
+  lv_obj_align(
+      ram_card,
+      LV_ALIGN_RIGHT_MID,
+      -18,
+      0);
 }
 
-static void lvgl_flush_cb(
-    lv_display_t *display,
-    const lv_area_t *area,
-    uint8_t *px_map)
-{
-  ESP_LOGI(TAG_LVGL_UI, "flush_cb: (%d,%d)-(%d,%d), flush_ready_count=%lu",
-           area->x1, area->y1, area->x2, area->y2, flush_ready_count);
-  esp_lcd_panel_handle_t panel =
-      (esp_lcd_panel_handle_t)lv_display_get_user_data(display);
-
-  ESP_ERROR_CHECK(
-      esp_lcd_panel_draw_bitmap(
-          panel,
-          area->x1,
-          area->y1,
-          area->x2 + 1,
-          area->y2 + 1,
-          px_map));
-}
-
-lv_obj_t *img = nullptr;
 static void ui()
 {
   WallpaperData *wallpaperData = loadWallpaperData();
@@ -68,98 +241,8 @@ static void ui()
       lv_color_hex(0xFF00FF),
       0);
 
-  img = lv_image_create(screen);
-  lv_obj_set_pos(img, 0, 0);
-  lv_image_set_src(img, &wallpaper_img_dsc);
-  /*   lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN); */
-}
-
-static void lvgl_task(void *arg)
-{
-  ESP_LOGI(TAG_LVGL_UI, "Starting LVGL");
-
-  lv_init();
-
-  esp_timer_create_args_t lvgl_tick_timer_args = {};
-  lvgl_tick_timer_args.callback = &lvgl_tick_timer_cb;
-  lvgl_tick_timer_args.name = "lvgl_tick";
-  ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
-  ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, 5 * 1000)); // 5ms in µs
-
-  lv_display = lv_display_create(
-      LCD_WIDTH,
-      LCD_HEIGHT);
-
-  if (lv_display == NULL)
-  {
-    ESP_LOGE(TAG_LVGL_UI, "Failed to create LVGL display");
-    vTaskDelete(NULL);
-    return;
-  }
-
-  lv_display_set_color_format(
-      lv_display,
-      LV_COLOR_FORMAT_RGB565_SWAPPED);
-
-  uint16_t *draw_buffer =
-      (uint16_t *)heap_caps_malloc(
-          LCD_WIDTH *
-              LVGL_BUFFER_LINES *
-              sizeof(uint16_t),
-          MALLOC_CAP_DMA);
-
-  if (draw_buffer == NULL)
-  {
-    ESP_LOGE(TAG_LVGL_UI, "Failed to allocate LVGL buffer");
-    vTaskDelete(NULL);
-    return;
-  }
-
-  lv_display_set_buffers(
-      lv_display,
-      draw_buffer,
-      NULL,
-      LCD_WIDTH *
-          LVGL_BUFFER_LINES *
-          sizeof(uint16_t),
-      LV_DISPLAY_RENDER_MODE_PARTIAL);
-
-  lv_display_set_user_data(
-      lv_display,
-      panel_handle);
-
-  lv_display_set_flush_cb(
-      lv_display,
-      lvgl_flush_cb);
-
-  lv_obj_t *screen = lv_screen_active();
-
-  ui();
-
-  ESP_LOGI(TAG_LVGL_UI, "LVGL initialized");
-
-  while (true)
-  {
-    if (testImg)
-    {
-      testImg = false;
-      lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
-      lv_image_set_src(img, &wallpaper_img_dsc);
-    }
-
-    uint32_t delay_ms = lv_timer_handler();
-
-    if (delay_ms < 1)
-    {
-      delay_ms = 1;
-    }
-
-    if (delay_ms > 20)
-    {
-      delay_ms = 20;
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(delay_ms));
-  }
+  wallpaper = lv_image_create(screen);
+  lv_obj_set_pos(wallpaper, 0, 0);
+  lv_image_set_src(wallpaper, &wallpaper_img_dsc);
+  create_dashboard(lv_screen_active());
 }

@@ -1,121 +1,121 @@
-import { Label, ListBox, Select } from "@heroui/react";
-import { useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { ThemeContext } from "../../context/theme-context";
-import { ThemeOptions } from "../../types/theme-options";
-import { renderFlag } from "../../utils/render-flag";
 import CardWithTitle from "../card-with-header";
+import { faLightbulb, faSave, faTv } from "@fortawesome/free-solid-svg-icons";
 import {
-  faComputer,
-  faMoon,
-  faPaintBrush,
-  faSun,
-} from "@fortawesome/free-solid-svg-icons";
+  Button,
+  ColorArea,
+  ColorField,
+  ColorPicker,
+  ColorSlider,
+  ColorSwatch,
+  Label,
+  parseColor,
+  Slider,
+} from "@heroui/react";
+import { useFormik } from "formik";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useMutation } from "@tanstack/react-query";
+import type { JsonMessage } from "../../../shared/types/json-message";
 
 export default function DisplaySettings() {
-  const { themeOption, setTheme } = useContext(ThemeContext);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+
+  const formik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      accentColor: parseColor("#000000"),
+      brightness: 0,
+    },
+    onSubmit(values) {
+      mutate({
+        accentColor: values.accentColor.toString("hex"),
+        brightness: values.brightness,
+      });
+    },
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (
+      payload: Omit<Extract<JsonMessage, { type: "SET_DISPLAY" }>, "type">,
+    ) => {
+      await window.electronAPI.espPcUtil.sendJson({
+        type: "SET_DISPLAY",
+        ...payload,
+      });
+    },
+  });
 
   return (
-    <CardWithTitle icon={faPaintBrush} title={t("display")}>
-      <div className="flex flex-col p-[1rem] gap-[1rem]">
-        <Select
-          value={themeOption}
-          onChange={(value) => setTheme(value?.toString() as ThemeOptions)}
+    <CardWithTitle icon={faTv} title={t("display")}>
+      <form
+        onSubmit={formik.handleSubmit}
+        className="flex flex-col p-[1rem] gap-[1rem]"
+      >
+        <ColorField
+          aria-label="accentColor"
+          value={formik.values.accentColor}
+          onChange={(value) => formik.setFieldValue("accentColor", value)}
         >
-          <Label>{t("theme")}</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              <ListBox.Item
-                key={ThemeOptions.SYSTEM}
-                id={ThemeOptions.SYSTEM}
-                textValue={t("system")}
+          <Label>{t("accentColor")}</Label>
+          <ColorField.Group>
+            <ColorField.Prefix>
+              <ColorPicker
+                value={formik.values.accentColor}
+                onChange={(value) => formik.setFieldValue("accentColor", value)}
               >
-                <div className="flex gap-[1rem] items-center">
-                  <div className="flex justify-center items-center h-[2rem] w-[2rem] bg-accent text-accent-foreground rounded-2xl">
-                    <FontAwesomeIcon icon={faComputer}></FontAwesomeIcon>
-                  </div>
-                  <div className="flex">{t("system")}</div>
-                </div>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item
-                key={ThemeOptions.LIGHT}
-                id={ThemeOptions.LIGHT}
-                textValue={t("light")}
-              >
-                <div className="flex gap-[1rem] items-center">
-                  <div className="flex justify-center items-center h-[2rem] w-[2rem] bg-accent text-accent-foreground rounded-2xl">
-                    <FontAwesomeIcon icon={faSun}></FontAwesomeIcon>
-                  </div>
-                  <div className="flex">{t("light")}</div>
-                </div>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item
-                key={ThemeOptions.DARK}
-                id={ThemeOptions.DARK}
-                textValue={t("dark")}
-              >
-                <div className="flex gap-[1rem] items-center">
-                  <div className="flex justify-center items-center h-[2rem] w-[2rem] bg-accent text-accent-foreground rounded-2xl">
-                    <FontAwesomeIcon icon={faMoon}></FontAwesomeIcon>
-                  </div>
-                  <div className="flex">{t("dark")}</div>
-                </div>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            </ListBox>
-          </Select.Popover>
-        </Select>
+                <ColorPicker.Trigger>
+                  <ColorSwatch size="sm" />
+                </ColorPicker.Trigger>
+                <ColorPicker.Popover className="gap-2">
+                  <ColorArea
+                    aria-label="Color area"
+                    className="max-w-full"
+                    colorSpace="hsb"
+                    xChannel="saturation"
+                    yChannel="brightness"
+                  >
+                    <ColorArea.Thumb />
+                  </ColorArea>
 
-        <Select
-          value={i18n.language}
-          onChange={(value) => i18n.changeLanguage(value?.toString())}
+                  <ColorSlider
+                    aria-label="Hue slider"
+                    channel="hue"
+                    className="flex-1"
+                    colorSpace="hsb"
+                  >
+                    <ColorSlider.Track>
+                      <ColorSlider.Thumb />
+                    </ColorSlider.Track>
+                  </ColorSlider>
+                </ColorPicker.Popover>
+              </ColorPicker>
+            </ColorField.Prefix>
+            <ColorField.Input />
+          </ColorField.Group>
+        </ColorField>
+
+        <Slider
+          minValue={0}
+          maxValue={100}
+          value={formik.values.brightness}
+          onChange={(value) => {
+            if (typeof value === "number") {
+              formik.setFieldValue("brightness", value);
+            }
+          }}
         >
-          <Label>{t("language")}</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              <ListBox.Item key={"ar"} id={"ar"} textValue={"العربية"}>
-                <div className="flex gap-[1rem] items-center">
-                  <div className="flex justify-center items-center h-[2rem] w-[2rem] rounded-lg">
-                    {renderFlag("ar")}
-                  </div>
-                  <div className="flex">العربية</div>
-                </div>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item key={"fr"} id={"fr"} textValue={"Français"}>
-                <div className="flex gap-[1rem] items-center">
-                  <div className="flex justify-center items-center h-[2rem] w-[2rem] rounded-lg">
-                    {renderFlag("fr")}
-                  </div>
-                  <div className="flex">Français</div>
-                </div>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item key={"en"} id={"en"} textValue={"English"}>
-                <div className="flex gap-[1rem] items-center">
-                  <div className="flex justify-center items-center h-[2rem] w-[2rem] rounded-lg">
-                    {renderFlag("en")}
-                  </div>
-                  <div className="flex">English</div>
-                </div>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            </ListBox>
-          </Select.Popover>
-        </Select>
-      </div>
+          <Label>{t("brightness")}</Label>
+          <Slider.Output />
+          <Slider.Track>
+            <Slider.Fill />
+            <Slider.Thumb />
+          </Slider.Track>
+        </Slider>
+
+        <Button fullWidth type="submit" isPending={isPending}>
+          {t("save")} <FontAwesomeIcon icon={faSave}></FontAwesomeIcon>
+        </Button>
+      </form>
     </CardWithTitle>
   );
 }

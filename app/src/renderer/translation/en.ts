@@ -2,6 +2,7 @@ export const EN = {
   home: "Home",
   notFound: "Not Found",
   error: "Error",
+  appSettings: "App Settings",
   connect: "Connect",
   connected: "Connected",
   disconnected: "Disconnected",
@@ -14,6 +15,8 @@ export const EN = {
   dark: "Dark",
   language: "Language",
   rgbLed: "RGB LED",
+  color: "Color",
+  accentColor: "Accent color",
   brightness: "Brightness",
   save: "Save",
   wallpaper: "Wallpaper",
@@ -22,4 +25,5 @@ export const EN = {
   zoom: "Zoom",
   rotation: "Rotation",
   preview: "Preview",
+  settingWallpaper: "Setting wallpaper...",
 };

@@ -3,10 +3,11 @@
 #include <ArduinoJson.h>
 #include "mbedtls/base64.h"
 #include "esp_heap_caps.h"
-#include "LvglUI.h"
+#include "LvglMain.h"
 #include "JsonSerial.h"
 #include "Validation.h"
 #include "Led.h"
+#include "LvglMain.h"
 #include "SpiRamAllocator.h"
 #include "SerialMessages.h"
 #include "preferences/Wallpaper.h"
@@ -55,9 +56,51 @@ static void onJson(JsonDocument &doc)
     saveLedData(&ledData);
     set_rgb_hex(color, brightness);
   }
-  else if (strcmp(type, MessageTypes::GET_DATA) == 0)
+  else if (strcmp(type, MessageTypes::SET_DISPLAY) == 0)
   {
-    /* code */
+    if (
+        !doc["accentColor"].is<const char *>() ||
+        !doc["brightness"].is<uint8_t>())
+    {
+      return;
+    }
+
+    const char *accentColor = doc["accentColor"].as<const char *>();
+    uint8_t brightness = doc["brightness"].as<uint8_t>();
+
+    if (!isValidHexColor(accentColor))
+    {
+      return;
+    }
+
+    DisplayData displayData = {};
+    displayData.brightness = brightness;
+    strncpy(displayData.accent_color, accentColor, 8);
+    saveDisplayData(&displayData);
+    set_tft_brightness(brightness);
+
+    LvglMessage lvglMessage{};
+    lvglMessage.type = LvglMessageType::SetAccentColor;
+    strncpy(lvglMessage.data.setAccentColorLvglMessage.accent_color, accentColor, 8);
+    xQueueSend(lvgl_message_queue_handle, &lvglMessage, 0);
+  }
+  else if (strcmp(type, MessageTypes::PC_STATS) == 0)
+  {
+    if (
+        !doc["cpu"].is<uint8_t>() ||
+        !doc["ram"].is<uint8_t>())
+    {
+      return;
+    }
+
+    uint8_t cpu = doc["cpu"].as<uint8_t>();
+    uint8_t ram = doc["ram"].as<uint8_t>();
+
+    LvglMessage lvglMessage{};
+    lvglMessage.type = LvglMessageType::SetStats;
+    lvglMessage.data.setStatsLvglMessage.cpu = cpu;
+    lvglMessage.data.setStatsLvglMessage.ram = ram;
+    xQueueSend(lvgl_message_queue_handle, &lvglMessage, 0);
   }
   else
   {
@@ -111,7 +154,10 @@ static void onImage(const char *type, size_t typeLen,
 
   saveWallpaperData();
   sendSetWallpaperCompletedMessage();
-  testImg = true;
+
+  LvglMessage lvglMessage{};
+  lvglMessage.type = LvglMessageType::UpdateWallpaper;
+  xQueueSend(lvgl_message_queue_handle, &lvglMessage, 0);
 
   ESP_LOGI(TAG_SERIAL_HANDLER, "image displayed");
 }

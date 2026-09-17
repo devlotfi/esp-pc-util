@@ -1,10 +1,11 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useContext } from "react";
 import { SerialContext } from "../context/serial-context";
-import DisplaySettings from "../components/dashboard/display-settings";
 import LedSettings from "../components/dashboard/led-settings";
 import WallpaperSettings from "../components/dashboard/wallpaper-settings";
 import { ScrollShadow } from "@heroui/react";
+import AppSettings from "../components/dashboard/app-settings";
+import DisplaySettings from "../components/dashboard/display-settings";
 
 export const Route = createFileRoute("/dashboard")({
   component: RouteComponent,
@@ -16,7 +17,7 @@ function RouteComponent() {
   if (!connected) return <Navigate to="/"></Navigate>;
 
   return (
-    <ScrollShadow className="flex flex-col flex-1 items-center h-[calc(100dvh-3.5rem)] overflow-x-hidden overflow-y-auto">
+    <ScrollShadow className="flex flex-col flex-1 items-center h-[calc(100dvh-3.5rem)] pb-[3rem] overflow-x-hidden overflow-y-auto">
       <div className="flex flex-col p-[1rem] w-full max-w-screen-lg">
         <WallpaperSettings></WallpaperSettings>
       </div>
@@ -24,8 +25,9 @@ function RouteComponent() {
         <div className="flex flex-col flex-1 gap-[1rem]">
           <DisplaySettings></DisplaySettings>
         </div>
-        <div className="flex flex-col flex-1 gap-[1rem] ">
+        <div className="flex flex-col flex-1 gap-[1rem]">
           <LedSettings></LedSettings>
+          <AppSettings></AppSettings>
         </div>
       </div>
     </ScrollShadow>

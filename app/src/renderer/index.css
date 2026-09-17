@@ -42,15 +42,22 @@
     @apply border border-border bg-surface;
   }
 
+  .tabs {
+    @apply border border-border rounded-4xl p-[0.5rem];
+  }
+
   .tabs__indicator {
     @apply bg-accent rounded-2xl;
   }
+
   .tabs__tab[aria-selected="true"] {
     @apply text-accent-foreground;
   }
-  .tabs__list {
-    @apply bg-background border border-border;
+
+  .tabs__list-container {
+    @apply bg-surface border border;
   }
+
   .tabs__panel {
     @apply mt-[2rem];
   }

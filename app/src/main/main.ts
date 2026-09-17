@@ -63,6 +63,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle(ipcDefinition.window.invoke.close, () => {
+    console.log("close");
     mainWindow.close();
   });
 

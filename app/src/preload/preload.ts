@@ -61,8 +61,11 @@ export const electronApi = {
         );
       };
     },
-    onJson(callback: (json: unknown) => void) {
-      const listener = (_event: Electron.IpcRendererEvent, json: unknown) => {
+    onJson(callback: (json: JsonMessage) => void) {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        json: JsonMessage,
+      ) => {
         callback(json);
       };
       ipcRenderer.on(

@@ -74,7 +74,7 @@ export default function Titlebar() {
         <Button
           isIconOnly
           variant="outline"
-          onPress={() => mutate()}
+          onPress={() => window.electronAPI.window.close()}
           isPending={isPending}
         >
           <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>

@@ -203,8 +203,6 @@ static volatile int8_t encoder_accumulator = 0;
 static volatile EncoderEvents encoder_event = EncoderEvents::EVENT_NONE;
 static volatile ButtonEvents button_event = ButtonEvents::EVENT_NONE;
 
-static TaskHandle_t tiny_usb_task_handle = nullptr;
-
 static void IRAM_ATTR button_isr_handler(void *arg)
 {
   (void)arg;
@@ -323,8 +321,6 @@ static void tiny_usb_task(void *arg)
 
   // Establish initial encoder state before enabling interrupts
   encoder.previous_state = read_encoder_state();
-
-  tiny_usb_task_handle = xTaskGetCurrentTaskHandle();
 
   // Install GPIO ISR service
   ESP_ERROR_CHECK(

@@ -56,6 +56,7 @@ export default function LedSettings() {
           value={formik.values.color}
           onChange={(value) => formik.setFieldValue("color", value)}
         >
+          <Label>{t("color")}</Label>
           <ColorField.Group>
             <ColorField.Prefix>
               <ColorPicker
