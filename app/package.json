@@ -10,8 +10,8 @@
     "build-electron:dev": "concurrently --names BUILD-MAIN,BUILD-PRELOAD -c bgGreen,bgYellow \"npm run build-main:dev\" \"npm run build-preload:dev\"",
     "build-electron:prod": "concurrently --names BUILD-RENDERER,BUILD-MAIN,BUILD-PRELOAD -c bgMagenta,bgGreen,bgYellow \"npm run build-renderer:prod\" \"npm run build-main:dev\" \"npm run build-preload:dev\" && tsx build.ts",
     "build-renderer:prod": "tsc -b && vite build --config vite-renderer.config.ts",
-    "build-main:dev": "vite build --config vite-main.config.ts",
-    "build-main:prod": "tsc -b && vite build --config vite-main.config.ts",
+    "build-main:dev": "vite build --config vite-main.config.ts && shx mkdir -p dist/assets && shx cp res/tray-icon.png dist/assets/tray-icon.png",
+    "build-main:prod": "tsc -b && vite build --config vite-main.config.ts && shx mkdir -p dist/assets && shx cp res/tray-icon.png dist/assets/tray-icon.png",
     "build-preload:dev": "vite build --config vite-preload.config.ts",
     "build-preload:prod": "tsc -b && vite build --config vite-preload.config.ts"
   },
@@ -36,6 +36,7 @@
     "react-easy-crop": "^6.2.3",
     "react-i18next": "^17.0.14",
     "serialport": "^13.0.0",
+    "shx": "^0.4.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.13",
     "yup": "^1.7.1"

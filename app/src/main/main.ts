@@ -1,4 +1,12 @@
-import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  Tray,
+  Menu,
+  nativeImage,
+} from "electron";
 import path from "path";
 import { ipcDefinition, type ConnectPayload } from "../shared/ipc.ts";
 import { JsonSerial } from "./json-serial.ts";
@@ -6,55 +14,99 @@ import { SerialPort } from "serialport";
 import type { JsonMessage } from "../shared/types/json-message.ts";
 
 let serial: JsonSerial | null = null;
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuitting = false;
 
-// Create a reference for the window so that it can be accessed later
-// Function to create the main window
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 900,
     height: 600,
     titleBarStyle: "hidden",
     webPreferences: {
       preload: path.join(import.meta.dirname, "../preload/preload.cjs"),
-      nodeIntegration: false, // Prevents access to Node.js features from the renderer
-      contextIsolation: true, // Isolates context between main and renderer process
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   });
 
-  mainWindow.webContents.session.setPermissionCheckHandler(() => {
-    return true;
-  });
+  win.webContents.session.setPermissionCheckHandler(() => true);
+  win.webContents.session.setDevicePermissionHandler(() => true);
 
-  mainWindow.webContents.session.setDevicePermissionHandler(() => {
-    return true;
-  });
-
-  // Open DevTools in development mode
   if (app.isPackaged) {
-    mainWindow.loadFile(
-      path.join(import.meta.dirname, "../renderer/index.html"),
-    );
+    win.loadFile(path.join(import.meta.dirname, "../renderer/index.html"));
   } else {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
+    win.loadURL("http://localhost:5173");
+    win.webContents.openDevTools();
   }
 
-  return mainWindow;
+  // Intercept close: hide instead of destroying the window, unless we're actually quitting
+  win.on("close", (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      win.hide();
+    }
+  });
+
+  return win;
 }
 
-// Event listener when Electron finishes initialization
+function createTray() {
+  // Provide a real icon file here (16x16 or 32x32 png recommended)
+  const iconPath = path.join(import.meta.dirname, "../assets/tray-icon.png");
+  const icon = nativeImage.createFromPath(iconPath);
+  tray = new Tray(icon);
+
+  const rebuildMenu = () => {
+    const connected = serial !== null;
+    tray!.setContextMenu(
+      Menu.buildFromTemplate([
+        {
+          label: "Show Window",
+          click: () => {
+            mainWindow?.show();
+          },
+        },
+        { type: "separator" },
+        {
+          label: connected ? "Serial: Connected" : "Serial: Disconnected",
+          enabled: false,
+        },
+        { type: "separator" },
+        {
+          label: "Quit",
+          click: () => {
+            isQuitting = true;
+            app.quit();
+          },
+        },
+      ]),
+    );
+  };
+
+  rebuildMenu();
+  tray.setToolTip("ESP PC Util");
+  tray.on("click", () => {
+    mainWindow?.show();
+  });
+
+  return { rebuildMenu };
+}
+
 app.whenReady().then(() => {
-  const mainWindow = createWindow();
+  mainWindow = createWindow();
+  const { rebuildMenu } = createTray();
 
   globalShortcut.register("F5", () => {
-    if (mainWindow) mainWindow.reload();
+    mainWindow?.reload();
   });
 
   ipcMain.handle(ipcDefinition.window.invoke.minimize, () => {
-    mainWindow.minimize();
+    mainWindow?.minimize();
   });
 
   ipcMain.handle(ipcDefinition.window.invoke.maximize, () => {
+    if (!mainWindow) return;
     if (mainWindow.isMaximized()) {
       mainWindow.unmaximize();
     } else {
@@ -62,9 +114,9 @@ app.whenReady().then(() => {
     }
   });
 
+  // "Close" from the titlebar now just hides the window (tray keeps it alive)
   ipcMain.handle(ipcDefinition.window.invoke.close, () => {
-    console.log("close");
-    mainWindow.close();
+    mainWindow?.hide();
   });
 
   ipcMain.handle(ipcDefinition.espPcUtil.invoke.listPorts, async () => {
@@ -94,31 +146,29 @@ app.whenReady().then(() => {
       });
 
       serial.onConnected(() => {
-        mainWindow.webContents.send(
+        mainWindow?.webContents.send(
           ipcDefinition.espPcUtil.events.mainToRenderer.connected,
         );
+        rebuildMenu();
       });
 
       serial.onDisconnected(() => {
-        mainWindow.webContents.send(
+        mainWindow?.webContents.send(
           ipcDefinition.espPcUtil.events.mainToRenderer.closed,
         );
+        rebuildMenu();
       });
 
       serial.onError((error) => {
-        mainWindow.webContents.send(
+        mainWindow?.webContents.send(
           ipcDefinition.espPcUtil.events.mainToRenderer.error,
-          {
-            message: error.message,
-          },
+          { message: error.message },
         );
       });
 
       serial.onJson((json) => {
-        console.log("Received valid JSON:", json);
         if (typeof json === "object" && json !== null && "type" in json) {
-          console.log("Message type:", json.type);
-          mainWindow.webContents.send(
+          mainWindow?.webContents.send(
             ipcDefinition.espPcUtil.events.mainToRenderer.json,
             json,
           );
@@ -131,20 +181,29 @@ app.whenReady().then(() => {
     if (serial) {
       await serial.close();
       serial = null;
+      rebuildMenu();
     }
   });
 
-  // For macOS, create a window when the app is clicked if no other windows are open
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      mainWindow = createWindow();
+    } else {
+      mainWindow?.show();
     }
   });
 });
 
-// Event listener when all windows are closed (for Windows/Linux)
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+// Don't quit when all windows are closed — the tray keeps the process alive
+app.on("window-all-closed", () => {});
+
+// Make sure the serial port is closed cleanly when the app actually quits
+app.on("before-quit", async (event) => {
+  isQuitting = true;
+  if (serial) {
+    event.preventDefault();
+    await serial.close();
+    serial = null;
     app.quit();
   }
 });
