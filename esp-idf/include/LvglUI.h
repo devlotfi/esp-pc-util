@@ -13,6 +13,7 @@
 #include "lvgl.h"
 #include "Properties.h"
 #include "Vars.h"
+#include "preferences/Wallpaper.h"
 
 static const char *TAG_LVGL_UI = "LVGL_UI";
 
@@ -57,6 +58,8 @@ static void lvgl_flush_cb(
 lv_obj_t *img = nullptr;
 static void ui()
 {
+  WallpaperData *wallpaperData = loadWallpaperData();
+
   lv_obj_t *screen =
       lv_screen_active();
 
@@ -68,7 +71,8 @@ static void ui()
   img = lv_image_create(screen);
   lv_obj_set_pos(img, 0, 0);
   lv_image_set_src(img, &wallpaper_img_dsc);
-  lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
+  /*   lv_obj_add_flag(img, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN); */
 }
 
 static void lvgl_task(void *arg)

@@ -7,6 +7,7 @@
 #include "JsonSerial.h"
 #include "Validation.h"
 #include "Led.h"
+#include "preferences/Wallpaper.h"
 
 static const char *TAG_SERIAL_HANDLER = "SERIAL_HANDLER";
 
@@ -87,18 +88,15 @@ static bool decodeImageBase64(
     return false;
   }
 
-  if (!image_buffer)
+  if (!wallpaperDataCache)
   {
-    if (!image_buffer)
-    {
-      return false;
-    }
+    return false;
   }
 
   size_t decoded_size = 0;
 
   int result = mbedtls_base64_decode(
-      image_buffer,
+      wallpaperDataCache->image,
       IMAGE_SIZE,
       &decoded_size,
       reinterpret_cast<const unsigned char *>(base64),
@@ -121,6 +119,7 @@ static void onImage(const char *type, size_t typeLen,
     return;
   }
 
+  saveWallpaperData();
   testImg = true;
 
   ESP_LOGI(TAG_SERIAL_HANDLER, "image displayed");

@@ -22,23 +22,3 @@ static volatile bool testImg = false;
 static constexpr size_t IMAGE_WIDTH = 320;
 static constexpr size_t IMAGE_HEIGHT = 240;
 static constexpr size_t IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT * 2;
-static uint8_t *image_buffer = static_cast<uint8_t *>(
-    heap_caps_malloc(
-        IMAGE_SIZE,
-        MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
-
-static lv_image_dsc_t wallpaper_img_dsc = {
-    .header = {
-        .magic = LV_IMAGE_HEADER_MAGIC,
-        .cf = LV_COLOR_FORMAT_RGB565_SWAPPED,
-        .flags = 0,
-        .w = IMAGE_WIDTH,
-        .h = IMAGE_HEIGHT,
-        .stride = IMAGE_WIDTH * 2,
-        .reserved_2 = 0,
-    },
-    .data_size = IMAGE_SIZE,
-    .data = image_buffer,
-    .reserved = nullptr,
-    .reserved_2 = 0,
-};

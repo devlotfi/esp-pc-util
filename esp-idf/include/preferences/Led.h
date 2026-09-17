@@ -2,12 +2,10 @@
 
 #include <stdint.h>
 #include <cstring>
-
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_heap_caps.h"
 #include "esp_err.h"
-
 #include "Properties.h"
 #include "NvsStorage.h"
 

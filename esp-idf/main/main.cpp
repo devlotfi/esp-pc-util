@@ -11,6 +11,7 @@
 #include "Led.h"
 #include "NvsStorage.h"
 #include "preferences/Led.h"
+#include "preferences/Wallpaper.h"
 
 static const char *TAG_MAIN = "GPIO";
 
