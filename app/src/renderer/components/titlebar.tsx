@@ -12,13 +12,15 @@ import { useContext } from "react";
 import { SerialContext } from "../context/serial-context";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
+import { clearSerialConnection } from "../utils/persist-connection";
 
 export default function Titlebar() {
   const { t } = useTranslation();
-  const { connected } = useContext(SerialContext);
+  const { connected, connectionInfo } = useContext(SerialContext);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
+      clearSerialConnection();
       await window.electronAPI.espPcUtil.close();
     },
   });
@@ -30,11 +32,18 @@ export default function Titlebar() {
         <div className="flex font-medium">ESP PC Util</div>
       </div>
 
-      <div className="titlebar-ui flex items-center gap-[0.5rem]">
+      <div className="flex items-center gap-[0.5rem]">
         {connected ? (
           <Chip size="lg" variant="primary" color="success">
             <FontAwesomeIcon icon={faPlugCircleCheck}></FontAwesomeIcon>
             <Chip.Label>{t("connected")}</Chip.Label>
+            {connectionInfo ? (
+              <Chip size="sm" variant="secondary" color="success">
+                <Chip.Label>
+                  {connectionInfo.port} / {connectionInfo.baudRate}
+                </Chip.Label>
+              </Chip>
+            ) : null}
           </Chip>
         ) : (
           <Chip size="lg" variant="primary" color="danger">
@@ -48,6 +57,7 @@ export default function Titlebar() {
             isIconOnly
             size="sm"
             variant="outline"
+            className="titlebar-ui"
             onPress={() => mutate()}
           >
             <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>

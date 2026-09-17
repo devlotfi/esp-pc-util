@@ -12,6 +12,10 @@ import { ipcDefinition, type ConnectPayload } from "../shared/ipc.ts";
 import { JsonSerial } from "./json-serial.ts";
 import { SerialPort } from "serialport";
 import type { JsonMessage } from "../shared/types/json-message.ts";
+import {
+  getCpuUsagePercentage,
+  getRamUsagePercentage,
+} from "./system-stats.ts";
 
 let serial: JsonSerial | null = null;
 let mainWindow: BrowserWindow | null = null;
@@ -52,13 +56,13 @@ function createWindow() {
 }
 
 function createTray() {
-  // Provide a real icon file here (16x16 or 32x32 png recommended)
   const iconPath = path.join(import.meta.dirname, "../assets/tray-icon.png");
   const icon = nativeImage.createFromPath(iconPath);
   tray = new Tray(icon);
 
   const rebuildMenu = () => {
-    const connected = serial !== null;
+    console.log("Tray: rebuild");
+    const connected = serial?.isOpen();
     tray!.setContextMenu(
       Menu.buildFromTemplate([
         {
@@ -91,6 +95,22 @@ function createTray() {
   });
 
   return { rebuildMenu };
+}
+
+let pcStatsSendInterval: any = null;
+
+async function sendPcStats() {
+  console.log("send data");
+  const cpu = await getCpuUsagePercentage();
+  const ram = getRamUsagePercentage();
+
+  if (serial) {
+    await serial.send({
+      type: "PC_STATS",
+      cpu,
+      ram,
+    });
+  }
 }
 
 app.whenReady().then(() => {
@@ -149,6 +169,12 @@ app.whenReady().then(() => {
         mainWindow?.webContents.send(
           ipcDefinition.espPcUtil.events.mainToRenderer.connected,
         );
+        if (pcStatsSendInterval !== null) {
+          clearInterval(pcStatsSendInterval);
+          pcStatsSendInterval = null;
+        } else {
+          pcStatsSendInterval = setInterval(sendPcStats, 2000);
+        }
         rebuildMenu();
       });
 
@@ -156,6 +182,10 @@ app.whenReady().then(() => {
         mainWindow?.webContents.send(
           ipcDefinition.espPcUtil.events.mainToRenderer.closed,
         );
+        if (pcStatsSendInterval) {
+          clearInterval(pcStatsSendInterval);
+          pcStatsSendInterval = null;
+        }
         rebuildMenu();
       });
 

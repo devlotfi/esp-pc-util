@@ -13,6 +13,7 @@ import { useContext } from "react";
 import { SerialContext } from "../context/serial-context";
 import * as yup from "yup";
 import AppSettings from "../components/dashboard/app-settings";
+import { saveSerialConnection } from "../utils/persist-connection";
 
 export const BAUD_RATES = [
   110, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 56000,
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   const { t } = useTranslation();
-  const { connected } = useContext(SerialContext);
+  const { connected, setConnectionInfo } = useContext(SerialContext);
 
   const formik = useFormik({
     initialValues: {
@@ -53,6 +54,8 @@ function RouteComponent() {
   const { mutate, isPending } = useMutation({
     mutationFn: async (payload: ConnectPayload) => {
       await window.electronAPI.espPcUtil.connect(payload);
+      setConnectionInfo(payload);
+      saveSerialConnection(payload);
     },
   });
 

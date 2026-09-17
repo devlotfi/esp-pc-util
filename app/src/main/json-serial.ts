@@ -1,4 +1,5 @@
 import { SerialPort } from "serialport";
+import type { JsonMessage } from "../shared/types/json-message.ts";
 
 export type JsonCallback<T = unknown> = (json: T) => void;
 export type ConnectedCallback = () => void;
@@ -63,7 +64,7 @@ export class JsonSerial {
     this.errorCallback = callback;
   }
 
-  async send<T>(json: T): Promise<void> {
+  async send(json: JsonMessage): Promise<void> {
     const payload = Buffer.from(JSON.stringify(json), "utf8");
 
     if (payload.length > 0xffffffff) {
