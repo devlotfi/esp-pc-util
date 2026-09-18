@@ -29,6 +29,7 @@ export default function SerialProvider({ children }: PropsWithChildren) {
       }
 
       window.electronAPI.espPcUtil.connect(serialConnection);
+      setConnectionInfo(serialConnection);
     };
 
     tryConnect();

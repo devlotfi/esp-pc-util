@@ -243,6 +243,10 @@ static void ui()
 
   wallpaper = lv_image_create(screen);
   lv_obj_set_pos(wallpaper, 0, 0);
-  lv_image_set_src(wallpaper, &wallpaper_img_dsc);
+  if (wallpaperData->isSet)
+  {
+    lv_image_set_src(wallpaper, &wallpaper_img_dsc);
+  }
+
   create_dashboard(lv_screen_active());
 }

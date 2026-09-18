@@ -1,4 +1,5 @@
 import os from "node:os";
+import { Vars } from "./vars.ts";
 
 export function getRamUsagePercentage(): number {
   const total = os.totalmem();
@@ -42,4 +43,18 @@ function cpuTimes() {
   }
 
   return { idle, total };
+}
+
+export async function sendPcStats() {
+  console.log("send data");
+  const cpu = await getCpuUsagePercentage();
+  const ram = getRamUsagePercentage();
+
+  if (Vars.serial) {
+    await Vars.serial.send({
+      type: "PC_STATS",
+      cpu,
+      ram,
+    });
+  }
 }
