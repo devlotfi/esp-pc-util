@@ -12,6 +12,7 @@ A smart desk pc utility
 # 📌 Contents
 
 - [Tech stack](#tech-stack)
+- [How does the system work ?](#how-does-the-system-work-)
 - [Build](#build)
 - [Images](#images)
 - [Desktop App](#desktop-app)
@@ -24,6 +25,12 @@ A smart desk pc utility
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/arduino-json.svg">
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/lvgl.svg">
 </p>
+
+# How does the system work ?
+
+- The esp32 responds to user interactions by sending the appropriate HID keystroke
+- The desktop app uses serial to communicate with the esp32
+- The app is used for customisation and also for periodicly sending pc stats
 
 # Build
 
