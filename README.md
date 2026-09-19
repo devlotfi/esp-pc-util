@@ -19,6 +19,8 @@ A smart desk pc utility
 
 # Tech stack
 
+## Desktop App
+
 <p float="left">
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/html.svg">
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/css.svg">
@@ -35,8 +37,6 @@ A smart desk pc utility
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/electron.svg">
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/vite.svg">
 </p>
-
-## Desktop App
 
 ## IOT
 
