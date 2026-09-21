@@ -19,6 +19,27 @@ A smart desk pc utility
 
 # Tech stack
 
+## Desktop App
+
+<p float="left">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/html.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/css.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/ts.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/tailwind.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/react.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/fontawesome.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/formik.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/i18n.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/tanstack-router.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/tanstack-query.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/heroui.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/nodeserial.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/electron.svg">
+  <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/vite.svg">
+</p>
+
+## IOT
+
 <p float="left">
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/cpp.svg">
   <img height="50px" src="https://devlotfi.github.io/stack-icons/icons/espressif.svg">
